@@ -1,6 +1,5 @@
 {
   "name": "@swrpg-online/monte-carlo",
-  "version": "0.5.0",
   "description": "A library for performing Monte Carlo simulations with the Star Wars RPG narrative dice system by Fantasy Flight Games",
   "keywords": [
     "swrpg",

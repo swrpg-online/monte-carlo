@@ -1,0 +1,10 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 50% # Require total coverage for the project
+        threshold: 0% # No allowable drop in total coverage
+        informational: true # Make it blocking if false
+    patch:
+      default:
+        enabled: false # Disable patch (diff) coverage check

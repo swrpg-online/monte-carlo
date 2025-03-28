@@ -2,7 +2,7 @@
 
 ![npm version](https://img.shields.io/npm/v/@swrpg-online/monte-carlo)
 ![build](https://github.com/swrpg-online/monte-carlo/actions/workflows/release.yml/badge.svg)
-[![codecov](https://codecov.io/gh/swrpg-online/monte-carlo/graph/badge.svg?token=BQIFNBWKI8)](https://codecov.io/gh/swrpg-online/monte-carlo)
+[![codecov](https://codecov.io/gh/swrpg-online/monte-carlo/graph/badge.svg?token=smDjxPWvG9)](https://codecov.io/gh/swrpg-online/monte-carlo)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
 A utility library for Star Wars RPG by Fantasy Flight Games, providing statistical analysis and helper functions for the narrative dice system.
