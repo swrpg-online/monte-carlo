@@ -1,4 +1,5 @@
 import { DicePool, roll } from "@swrpg-online/dice";
+import { DiceResult } from "@swrpg-online/dice/dist/types";
 
 export { DicePool };
 
@@ -7,15 +8,6 @@ export class MonteCarloError extends Error {
     super(message);
     this.name = "MonteCarloError";
   }
-}
-
-export interface DiceResult {
-  success: number;
-  advantage: number;
-  triumph: number;
-  failure: number;
-  threat: number;
-  despair: number;
 }
 
 export interface MonteCarloResult {
@@ -106,14 +98,7 @@ export class MonteCarlo {
       // Run simulations
       for (let i = 0; i < this.iterations; i++) {
         const rollResult = roll(this.dicePool);
-        this.results.push({
-          success: rollResult.summary.successes,
-          advantage: rollResult.summary.advantages,
-          triumph: rollResult.summary.triumphs,
-          failure: rollResult.summary.failures,
-          threat: rollResult.summary.threats,
-          despair: rollResult.summary.despair,
-        });
+        this.results.push(rollResult.summary);
       }
 
       return {
@@ -135,46 +120,52 @@ export class MonteCarlo {
 
   private calculateAverages(): DiceResult {
     return {
-      success: this.average((r) => r.success),
-      advantage: this.average((r) => r.advantage),
-      triumph: this.average((r) => r.triumph),
-      failure: this.average((r) => r.failure),
-      threat: this.average((r) => r.threat),
+      successes: this.average((r) => r.successes),
+      advantages: this.average((r) => r.advantages),
+      triumphs: this.average((r) => r.triumphs),
+      failures: this.average((r) => r.failures),
+      threats: this.average((r) => r.threats),
       despair: this.average((r) => r.despair),
+      lightSide: this.average((r) => r.lightSide),
+      darkSide: this.average((r) => r.darkSide),
     };
   }
 
   private calculateMedians(): DiceResult {
     return {
-      success: this.median((r) => r.success),
-      advantage: this.median((r) => r.advantage),
-      triumph: this.median((r) => r.triumph),
-      failure: this.median((r) => r.failure),
-      threat: this.median((r) => r.threat),
+      successes: this.median((r) => r.successes),
+      advantages: this.median((r) => r.advantages),
+      triumphs: this.median((r) => r.triumphs),
+      failures: this.median((r) => r.failures),
+      threats: this.median((r) => r.threats),
       despair: this.median((r) => r.despair),
+      lightSide: this.median((r) => r.lightSide),
+      darkSide: this.median((r) => r.darkSide),
     };
   }
 
   private calculateStandardDeviations(): DiceResult {
     return {
-      success: this.standardDeviation((r) => r.success),
-      advantage: this.standardDeviation((r) => r.advantage),
-      triumph: this.standardDeviation((r) => r.triumph),
-      failure: this.standardDeviation((r) => r.failure),
-      threat: this.standardDeviation((r) => r.threat),
+      successes: this.standardDeviation((r) => r.successes),
+      advantages: this.standardDeviation((r) => r.advantages),
+      triumphs: this.standardDeviation((r) => r.triumphs),
+      failures: this.standardDeviation((r) => r.failures),
+      threats: this.standardDeviation((r) => r.threats),
       despair: this.standardDeviation((r) => r.despair),
+      lightSide: this.standardDeviation((r) => r.lightSide),
+      darkSide: this.standardDeviation((r) => r.darkSide),
     };
   }
 
   private calculateSuccessProbability(): number {
     return (
-      this.results.filter((r) => r.success - r.failure > 0).length /
+      this.results.filter((r) => r.successes - r.failures > 0).length /
       this.iterations
     );
   }
 
   private calculateCriticalSuccessProbability(): number {
-    return this.results.filter((r) => r.triumph > 0).length / this.iterations;
+    return this.results.filter((r) => r.triumphs > 0).length / this.iterations;
   }
 
   private calculateCriticalFailureProbability(): number {
@@ -184,7 +175,7 @@ export class MonteCarlo {
   private calculateNetPositiveProbability(): number {
     return (
       this.results.filter(
-        (r) => r.success - r.failure > 0 && r.advantage - r.threat > 0,
+        (r) => r.successes - r.failures > 0 && r.advantages - r.threats > 0,
       ).length / this.iterations
     );
   }

@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/swrpg-online/monte-carlo/graph/badge.svg?token=smDjxPWvG9)](https://codecov.io/gh/swrpg-online/monte-carlo)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
-A utility library for Star Wars RPG by Fantasy Flight Games, providing statistical analysis and helper functions for the narrative dice system.
+A utility library for Star Wars RPG by [Fantasy Flight Games](https://www.fantasyflightgames.com/en/starwarsrpg/) and [Edge Studio](https://www.edge-studio.net/categories-games/starwarsrpg/). Provides statistical analysis for the [narrative dice system](https://star-wars-rpg-ffg.fandom.com/wiki/Narrative_Dice).
 
 ## Installation
 
@@ -20,8 +20,7 @@ npm install @swrpg-online/monte-carlo
 The `MonteCarlo` class provides statistical analysis of dice pools through simulation. It helps understand the probabilities and distributions of different outcomes.
 
 ```typescript
-import { DicePool } from "@swrpg-online/dice";
-import { MonteCarlo } from "@swrpg-online/monte-carlo";
+import { MonteCarlo, DicePool } from "@swrpg-online/monte-carlo";
 
 // Create a dice pool
 const pool: DicePool = {
@@ -90,28 +89,34 @@ console.log("Combat Check Results:", JSON.stringify(combatResults, null, 2));
 ```JSON
 {
   "averages": {
-    "success": 1.4205,
-    "advantage": 2.5969,
-    "triumph": 0.1717,
-    "failure": 0.3253,
-    "threat": 2.1799,
-    "despair": 0.0827
+    "successes": 1.4205,
+    "advantages": 2.5969,
+    "triumphs": 0.1717,
+    "failures": 0.3253,
+    "threats": 2.1799,
+    "despair": 0.0827,
+    "lightSide": 0.0,
+    "darkSide": 0.0
   },
   "medians": {
-    "success": 1,
-    "advantage": 3,
-    "triumph": 0,
-    "failure": 0,
-    "threat": 2,
-    "despair": 0
+    "successes": 1,
+    "advantages": 3,
+    "triumphs": 0,
+    "failures": 0,
+    "threats": 2,
+    "despair": 0,
+    "lightSide": 0,
+    "darkSide": 0
   },
   "standardDeviations": {
-    "success": 1.4573536804770009,
-    "advantage": 1.4342978735255518,
-    "triumph": 0.396256369033995,
-    "failure": 0.7638585667516965,
-    "threat": 1.1950464384281536,
-    "despair": 0.2754282302161655
+    "successes": 1.4573536804770009,
+    "advantages": 1.4342978735255518,
+    "triumphs": 0.396256369033995,
+    "failures": 0.7638585667516965,
+    "threats": 1.1950464384281536,
+    "despair": 0.2754282302161655,
+    "lightSide": 0.0,
+    "darkSide": 0.0
   },
   "successProbability": 0.6273,
   "criticalSuccessProbability": 0.1643,
@@ -153,9 +158,10 @@ When analyzing your dice pool using the Monte Carlo simulation, here's how to in
 
 - **averages**: The expected number of each symbol you'll get on average:
 
-  - A success average of 1.5 means you typically get 1-2 successes
-  - An advantage average of 0.8 means you usually get about 1 advantage
-  - Triumph/Despair averages are typically low (e.g., 0.083 = 1 triumph per 12 rolls)
+  - A successes average of 1.5 means you typically get 1-2 successes
+  - An advantages average of 0.8 means you usually get about 1 advantage
+  - Triumphs/Despair averages are typically low (e.g., 0.083 = 1 triumph per 12 rolls)
+  - Light/Dark side averages are typically 0 unless using Force dice
 
 - **medians**: The middle value when all results are sorted. Useful for understanding the "typical" roll:
 
@@ -173,8 +179,8 @@ For example, if you have:
 
 ```typescript
 {
-  averages: { success: 2.0, advantage: 1.5 },
-  standardDeviations: { success: 1.2, advantage: 1.1 }
+  averages: { successes: 2.0, advantages: 1.5 },
+  standardDeviations: { successes: 1.2, advantages: 1.1 }
 }
 ```
 
@@ -201,32 +207,38 @@ The `simulate()` method returns a `MonteCarloResult` with the following informat
 interface MonteCarloResult {
   // Mean values for each symbol
   averages: {
-    success: number;
-    advantage: number;
-    triumph: number;
-    failure: number;
-    threat: number;
+    successes: number;
+    advantages: number;
+    triumphs: number;
+    failures: number;
+    threats: number;
     despair: number;
+    lightSide: number;
+    darkSide: number;
   };
 
   // Median values for each symbol
   medians: {
-    success: number;
-    advantage: number;
-    triumph: number;
-    failure: number;
-    threat: number;
+    successes: number;
+    advantages: number;
+    triumphs: number;
+    failures: number;
+    threats: number;
     despair: number;
+    lightSide: number;
+    darkSide: number;
   };
 
   // Standard deviations for each symbol
   standardDeviations: {
-    success: number;
-    advantage: number;
-    triumph: number;
-    failure: number;
-    threat: number;
+    successes: number;
+    advantages: number;
+    triumphs: number;
+    failures: number;
+    threats: number;
     despair: number;
+    lightSide: number;
+    darkSide: number;
   };
 
   // Probability of net successes > 0

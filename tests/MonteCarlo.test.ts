@@ -60,14 +60,16 @@ describe("MonteCarlo", () => {
       const result = monteCarlo.simulate();
 
       // With 2 Ability dice and 1 Proficiency die, we expect positive averages
-      expect(result.averages.success).toBeGreaterThan(0);
-      expect(result.averages.advantage).toBeGreaterThan(0);
-      expect(result.averages.triumph).toBeGreaterThanOrEqual(0);
+      expect(result.averages.successes).toBeGreaterThan(0);
+      expect(result.averages.advantages).toBeGreaterThan(0);
+      expect(result.averages.triumphs).toBeGreaterThanOrEqual(0);
 
       // These should be very close to 0 for this pool
-      expect(result.averages.failure).toBe(0);
-      expect(result.averages.threat).toBe(0);
+      expect(result.averages.failures).toBe(0);
+      expect(result.averages.threats).toBe(0);
       expect(result.averages.despair).toBe(0);
+      expect(result.averages.lightSide).toBe(0);
+      expect(result.averages.darkSide).toBe(0);
     });
 
     it("should calculate standard deviations correctly", () => {
@@ -75,12 +77,14 @@ describe("MonteCarlo", () => {
       const result = monteCarlo.simulate();
 
       // Standard deviations should be non-negative
-      expect(result.standardDeviations.success).toBeGreaterThan(0);
-      expect(result.standardDeviations.advantage).toBeGreaterThan(0);
-      expect(result.standardDeviations.triumph).toBeGreaterThanOrEqual(0);
-      expect(result.standardDeviations.failure).toBeGreaterThanOrEqual(0);
-      expect(result.standardDeviations.threat).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.successes).toBeGreaterThan(0);
+      expect(result.standardDeviations.advantages).toBeGreaterThan(0);
+      expect(result.standardDeviations.triumphs).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.failures).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.threats).toBeGreaterThanOrEqual(0);
       expect(result.standardDeviations.despair).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.lightSide).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.darkSide).toBeGreaterThanOrEqual(0);
     });
 
     it("should calculate medians correctly", () => {
@@ -88,12 +92,14 @@ describe("MonteCarlo", () => {
       const result = monteCarlo.simulate();
 
       // Medians should be integers
-      expect(Number.isInteger(result.medians.success)).toBe(true);
-      expect(Number.isInteger(result.medians.advantage)).toBe(true);
-      expect(Number.isInteger(result.medians.triumph)).toBe(true);
-      expect(Number.isInteger(result.medians.failure)).toBe(true);
-      expect(Number.isInteger(result.medians.threat)).toBe(true);
+      expect(Number.isInteger(result.medians.successes)).toBe(true);
+      expect(Number.isInteger(result.medians.advantages)).toBe(true);
+      expect(Number.isInteger(result.medians.triumphs)).toBe(true);
+      expect(Number.isInteger(result.medians.failures)).toBe(true);
+      expect(Number.isInteger(result.medians.threats)).toBe(true);
       expect(Number.isInteger(result.medians.despair)).toBe(true);
+      expect(Number.isInteger(result.medians.lightSide)).toBe(true);
+      expect(Number.isInteger(result.medians.darkSide)).toBe(true);
     });
 
     it("should use default iterations when not specified", () => {
@@ -101,9 +107,9 @@ describe("MonteCarlo", () => {
       const result = monteCarlo.simulate();
 
       // Just verify we get valid results
-      expect(result.averages.success).toBeDefined();
-      expect(result.medians.success).toBeDefined();
-      expect(result.standardDeviations.success).toBeDefined();
+      expect(result.averages.successes).toBeDefined();
+      expect(result.medians.successes).toBeDefined();
+      expect(result.standardDeviations.successes).toBeDefined();
     });
 
     it("should calculate net positive probability correctly", () => {
@@ -135,8 +141,12 @@ describe("MonteCarlo", () => {
       const result = monteCarlo.simulate();
 
       // Force dice don't affect normal success/failure
-      expect(result.averages.success).toBe(0);
-      expect(result.averages.failure).toBe(0);
+      expect(result.averages.successes).toBe(0);
+      expect(result.averages.failures).toBe(0);
+
+      // Force dice should show light/dark side results
+      expect(result.averages.lightSide).toBeGreaterThan(0);
+      expect(result.averages.darkSide).toBeGreaterThan(0);
     });
   });
 });
