@@ -35,10 +35,7 @@
     "ci:test": "tsc --noEmit && npx jest --verbose",
     "prepare": "husky"
   },
-  "author": {
-    "name": "Joshua Ziggas",
-    "email": "joshua.ziggas@gmail.com"
-  },
+  "author": "@swrpg-online",
   "license": "MIT",
   "repository": {
     "type": "git",
