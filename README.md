@@ -17,7 +17,7 @@ npm install @swrpg-online/monte-carlo
 
 ### Monte Carlo Simulation
 
-The `MonteCarlo` class provides statistical analysis of dice pools through simulation. It helps understand the probabilities and distributions of different outcomes.
+The `MonteCarlo` class provides statistical analysis of dice pools through simulation. It helps to understand the probabilities and distributions of different outcomes.
 
 ```typescript
 import { MonteCarlo, DicePool } from "@swrpg-online/monte-carlo";
