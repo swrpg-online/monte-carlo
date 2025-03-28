@@ -24,6 +24,10 @@
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc && ls -l",
     "test": "jest",
@@ -32,8 +36,19 @@
     "ci:test": "tsc --noEmit && npx jest --verbose",
     "prepare": "husky"
   },
-  "author": "",
+  "author": {
+    "name": "Joshua Ziggas",
+    "email": "joshua.ziggas@gmail.com"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swrpg-online/monte-carlo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/swrpg-online/monte-carlo/issues"
+  },
+  "homepage": "https://github.com/swrpg-online/monte-carlo#readme",
   "dependencies": {
     "@swrpg-online/dice": "^1.2.2"
   },
