@@ -1,7 +1,7 @@
 # @swrpg-online/monte-carlo
 
 ![npm version](https://img.shields.io/npm/v/@swrpg-online/monte-carlo)
-![build](https://github.com/swrpg-online/monte-carlo/actions/workflows/release.yml/badge.svg)
+![build](http://github.com/swrpg-online/monte-carlo/actions/workflows/release.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/swrpg-online/monte-carlo/graph/badge.svg?token=smDjxPWvG9)](https://codecov.io/gh/swrpg-online/monte-carlo)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
