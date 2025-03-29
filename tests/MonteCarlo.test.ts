@@ -167,6 +167,280 @@ describe("MonteCarlo", () => {
       expect(result.successProbability).toBeGreaterThan(0.2);
       expect(result.successProbability).toBeLessThan(0.4);
     });
+
+    it("should include histogram data in results", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      expect(result.histogram).toBeDefined();
+      expect(result.histogram.netSuccesses).toBeDefined();
+      expect(result.histogram.netAdvantages).toBeDefined();
+      expect(result.histogram.triumphs).toBeDefined();
+      expect(result.histogram.despairs).toBeDefined();
+      expect(result.histogram.lightSide).toBeDefined();
+      expect(result.histogram.darkSide).toBeDefined();
+    });
+
+    it("should track net successes correctly in histogram", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      const netSuccesses = result.histogram.netSuccesses;
+      const totalCount = Object.values(netSuccesses).reduce((a, b) => a + b, 0);
+      expect(totalCount).toBe(1000);
+
+      // Verify histogram matches success probability
+      const positiveNetSuccesses = Object.entries(netSuccesses)
+        .filter(([value]) => parseInt(value) > 0)
+        .reduce((sum, [, count]) => sum + count, 0);
+      expect(positiveNetSuccesses / 1000).toBeCloseTo(
+        result.successProbability,
+        2,
+      );
+    });
+
+    it("should track net advantages correctly in histogram", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      const netAdvantages = result.histogram.netAdvantages;
+      const totalCount = Object.values(netAdvantages).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      expect(totalCount).toBe(1000);
+    });
+
+    it("should track triumphs and despairs correctly in histogram", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Verify triumphs histogram matches critical success probability
+      const triumphsCount = Object.entries(result.histogram.triumphs)
+        .filter(([value]) => parseInt(value) > 0)
+        .reduce((sum, [, count]) => sum + count, 0);
+      expect(triumphsCount / 1000).toBeCloseTo(
+        result.criticalSuccessProbability,
+        2,
+      );
+
+      // Verify despairs histogram matches critical failure probability
+      const despairsCount = Object.entries(result.histogram.despairs)
+        .filter(([value]) => parseInt(value) > 0)
+        .reduce((sum, [, count]) => sum + count, 0);
+      expect(despairsCount / 1000).toBeCloseTo(
+        result.criticalFailureProbability,
+        2,
+      );
+    });
+
+    it("should maintain sparse storage in histogram", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Check that we don't store zero counts
+      Object.values(result.histogram).forEach((category) => {
+        Object.entries(category).forEach(([value, count]) => {
+          expect(count).toBeGreaterThan(0);
+        });
+      });
+    });
+
+    it("should handle force dice in histogram", () => {
+      const forcePool: DicePool = {
+        forceDice: 2,
+      };
+      const monteCarlo = new MonteCarlo(forcePool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Force dice should show light/dark side results
+      const lightSideCount = Object.values(result.histogram.lightSide).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      const darkSideCount = Object.values(result.histogram.darkSide).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      expect(lightSideCount).toBe(1000);
+      expect(darkSideCount).toBe(1000);
+    });
+
+    it("should handle mixed dice pools in histogram", () => {
+      const mixedPool: DicePool = {
+        abilityDice: 2,
+        difficultyDice: 1,
+        boostDice: 1,
+        setBackDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(mixedPool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Should track both positive and negative net values
+      const hasNegativeSuccesses = Object.keys(
+        result.histogram.netSuccesses,
+      ).some((value) => parseInt(value) < 0);
+      const hasNegativeAdvantages = Object.keys(
+        result.histogram.netAdvantages,
+      ).some((value) => parseInt(value) < 0);
+      expect(hasNegativeSuccesses).toBe(true);
+      expect(hasNegativeAdvantages).toBe(true);
+    });
+  });
+
+  describe("distribution analysis", () => {
+    it("should calculate skewness correctly", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        difficultyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Net successes should be slightly right-skewed due to ability dice
+      expect(result.analysis.netSuccesses.skewness).toBeGreaterThan(0);
+      // Net advantages should be symmetric
+      expect(Math.abs(result.analysis.netAdvantages.skewness)).toBeLessThan(
+        0.5,
+      );
+    });
+
+    it("should calculate kurtosis correctly", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        difficultyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Kurtosis should be finite and within reasonable bounds
+      expect(Number.isFinite(result.analysis.netSuccesses.kurtosis)).toBe(true);
+      expect(Number.isFinite(result.analysis.netAdvantages.kurtosis)).toBe(
+        true,
+      );
+      expect(Math.abs(result.analysis.netSuccesses.kurtosis)).toBeLessThan(10);
+      expect(Math.abs(result.analysis.netAdvantages.kurtosis)).toBeLessThan(10);
+    });
+
+    it("should detect outliers correctly", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // With multiple positive dice, should have some high-value outliers
+      expect(result.analysis.netSuccesses.outliers.length).toBeGreaterThan(0);
+      expect(
+        Math.max(...result.analysis.netSuccesses.outliers),
+      ).toBeGreaterThan(0);
+    });
+
+    it("should find modes correctly", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Should have at least one mode
+      expect(result.analysis.netSuccesses.modes.length).toBeGreaterThan(0);
+      // Mode should be a valid value
+      expect(result.analysis.netSuccesses.modes[0]).toBeDefined();
+    });
+
+    it("should calculate percentiles correctly", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        difficultyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Should have key percentiles
+      expect(result.analysis.netSuccesses.percentiles[25]).toBeDefined();
+      expect(result.analysis.netSuccesses.percentiles[50]).toBeDefined();
+      expect(result.analysis.netSuccesses.percentiles[75]).toBeDefined();
+      expect(result.analysis.netSuccesses.percentiles[90]).toBeDefined();
+
+      // Percentiles should be in ascending order
+      const percentiles = Object.entries(
+        result.analysis.netSuccesses.percentiles,
+      )
+        .map(([p, v]) => ({ percentile: parseInt(p), value: v }))
+        .sort((a, b) => a.percentile - b.percentile);
+
+      for (let i = 1; i < percentiles.length; i++) {
+        expect(percentiles[i].value).toBeGreaterThanOrEqual(
+          percentiles[i - 1].value,
+        );
+      }
+    });
+
+    it("should handle zero standard deviation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 100);
+      const result = monteCarlo.simulate();
+
+      // Should handle zero standard deviation gracefully
+      expect(() => result.analysis.netSuccesses.skewness).not.toThrow();
+      expect(() => result.analysis.netSuccesses.kurtosis).not.toThrow();
+      expect(() => result.analysis.netSuccesses.outliers).not.toThrow();
+    });
+
+    it("should handle single value distributions", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+        difficultyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 100);
+      const result = monteCarlo.simulate();
+
+      // Should handle single value distributions gracefully
+      expect(() => result.analysis.netSuccesses.skewness).not.toThrow();
+      expect(() => result.analysis.netSuccesses.kurtosis).not.toThrow();
+      expect(() => result.analysis.netSuccesses.outliers).not.toThrow();
+    });
+
+    it("should handle bimodal distributions", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        difficultyDice: 2,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Should be able to detect multiple modes
+      expect(result.analysis.netSuccesses.modes.length).toBeGreaterThanOrEqual(
+        1,
+      );
+      // With equal positive and negative dice, might have multiple modes
+      expect(result.analysis.netSuccesses.modes.length).toBeLessThanOrEqual(3);
+    });
+
+    it("should maintain analysis consistency", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Analysis should be consistent with histogram data
+      const netSuccesses = result.histogram.netSuccesses;
+      const totalCount = Object.values(netSuccesses).reduce((a, b) => a + b, 0);
+      expect(totalCount).toBe(10000);
+
+      // Mode should match highest count in histogram
+      const maxCount = Math.max(...Object.values(netSuccesses));
+      const histogramModes = Object.entries(netSuccesses)
+        .filter(([, count]) => count === maxCount)
+        .map(([value]) => parseInt(value));
+      expect(result.analysis.netSuccesses.modes).toEqual(histogramModes);
+    });
   });
 
   describe("edge cases", () => {

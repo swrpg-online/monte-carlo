@@ -10,6 +10,25 @@ export class MonteCarloError extends Error {
   }
 }
 
+export interface HistogramData {
+  netSuccesses: { [key: number]: number };
+  netAdvantages: { [key: number]: number };
+  triumphs: { [key: number]: number };
+  despairs: { [key: number]: number };
+  lightSide: { [key: number]: number };
+  darkSide: { [key: number]: number };
+}
+
+export interface DistributionAnalysis {
+  skewness: number;
+  kurtosis: number;
+  outliers: number[];
+  modes: number[];
+  percentiles: {
+    [key: number]: number; // key: percentile (0-100), value: threshold
+  };
+}
+
 export interface MonteCarloResult {
   averages: DiceResult;
   medians: DiceResult;
@@ -18,14 +37,33 @@ export interface MonteCarloResult {
   criticalSuccessProbability: number;
   criticalFailureProbability: number;
   netPositiveProbability: number;
+  histogram: HistogramData;
+  analysis: {
+    netSuccesses: DistributionAnalysis;
+    netAdvantages: DistributionAnalysis;
+    triumphs: DistributionAnalysis;
+    despairs: DistributionAnalysis;
+    lightSide: DistributionAnalysis;
+    darkSide: DistributionAnalysis;
+  };
 }
 
 export class MonteCarlo {
   private readonly dicePool: DicePool;
   private readonly iterations: number;
   private results: DiceResult[] = [];
+  private histogram: HistogramData = {
+    netSuccesses: {},
+    netAdvantages: {},
+    triumphs: {},
+    despairs: {},
+    lightSide: {},
+    darkSide: {},
+  };
   private static readonly MIN_ITERATIONS = 100;
   private static readonly MAX_ITERATIONS = 1000000;
+  // Cache for statistical calculations
+  private statsCache: Map<string, number> = new Map();
 
   constructor(dicePool: DicePool, iterations: number = 10000) {
     this.validateDicePool(dicePool);
@@ -91,24 +129,202 @@ export class MonteCarlo {
     }
   }
 
+  private calculateHistogramStats(
+    histogram: { [key: number]: number },
+    totalCount: number,
+  ): {
+    mean: number;
+    stdDev: number;
+    sum: number;
+    sumSquares: number;
+  } {
+    let sum = 0;
+    let sumSquares = 0;
+    let count = 0;
+
+    // Single pass to calculate sum and sum of squares
+    for (const [value, freq] of Object.entries(histogram)) {
+      const val = parseInt(value);
+      sum += val * freq;
+      sumSquares += val * val * freq;
+      count += freq;
+    }
+
+    const mean = sum / count;
+    const variance = sumSquares / count - mean * mean;
+    const stdDev = Math.sqrt(Math.max(0, variance)); // Avoid negative values due to floating point errors
+
+    return { mean, stdDev, sum, sumSquares };
+  }
+
+  private calculateSkewness(
+    histogram: { [key: number]: number },
+    stats: { mean: number; stdDev: number },
+  ): number {
+    if (stats.stdDev === 0) return 0;
+
+    let sumCubedDeviations = 0;
+    let totalCount = 0;
+
+    for (const [value, freq] of Object.entries(histogram)) {
+      const deviation = (parseInt(value) - stats.mean) / stats.stdDev;
+      sumCubedDeviations += Math.pow(deviation, 3) * freq;
+      totalCount += freq;
+    }
+
+    return sumCubedDeviations / totalCount;
+  }
+
+  private calculateKurtosis(
+    histogram: { [key: number]: number },
+    stats: { mean: number; stdDev: number },
+  ): number {
+    if (stats.stdDev === 0) return 0;
+
+    let sumFourthPowerDeviations = 0;
+    let totalCount = 0;
+
+    for (const [value, freq] of Object.entries(histogram)) {
+      const deviation = (parseInt(value) - stats.mean) / stats.stdDev;
+      sumFourthPowerDeviations += Math.pow(deviation, 4) * freq;
+      totalCount += freq;
+    }
+
+    return sumFourthPowerDeviations / totalCount - 3;
+  }
+
+  private findOutliers(
+    histogram: { [key: number]: number },
+    stats: { mean: number; stdDev: number },
+  ): number[] {
+    if (stats.stdDev === 0) return [];
+    const threshold = 2;
+    return Object.entries(histogram)
+      .filter(
+        ([value]) =>
+          Math.abs(parseInt(value) - stats.mean) > threshold * stats.stdDev,
+      )
+      .map(([value]) => parseInt(value));
+  }
+
+  private analyzeDistribution(
+    histogram: { [key: number]: number },
+    totalCount: number,
+  ): DistributionAnalysis {
+    // Calculate basic statistics in a single pass
+    const stats = this.calculateHistogramStats(histogram, totalCount);
+
+    return {
+      skewness: this.calculateSkewness(histogram, stats),
+      kurtosis: this.calculateKurtosis(histogram, stats),
+      outliers: this.findOutliers(histogram, stats),
+      modes: this.findModes(histogram),
+      percentiles: this.calculatePercentiles(histogram, totalCount),
+    };
+  }
+
+  private average(selector: (roll: DiceResult) => number): number {
+    const cacheKey = selector.toString();
+    if (this.statsCache.has(cacheKey)) {
+      return this.statsCache.get(cacheKey)!;
+    }
+
+    const avg =
+      this.results.reduce((sum, roll) => sum + selector(roll), 0) /
+      this.iterations;
+    this.statsCache.set(cacheKey, avg);
+    return avg;
+  }
+
+  private standardDeviation(selector: (roll: DiceResult) => number): number {
+    const cacheKey = `std_${selector.toString()}`;
+    if (this.statsCache.has(cacheKey)) {
+      return this.statsCache.get(cacheKey)!;
+    }
+
+    const avg = this.average(selector);
+    const squareSum = this.results.reduce((sum, roll) => {
+      const diff = selector(roll) - avg;
+      return sum + diff * diff;
+    }, 0);
+
+    const stdDev = Math.sqrt(squareSum / this.iterations);
+    this.statsCache.set(cacheKey, stdDev);
+    return stdDev;
+  }
+
   public simulate(): MonteCarloResult {
     try {
       this.results = [];
+      this.resetHistogram();
+      this.statsCache.clear();
 
-      // Run simulations
+      // Run simulations and update histograms in a single pass
+      let successCount = 0;
+      let criticalSuccessCount = 0;
+      let criticalFailureCount = 0;
+      let netPositiveCount = 0;
+
       for (let i = 0; i < this.iterations; i++) {
         const rollResult = roll(this.dicePool);
         this.results.push(rollResult.summary);
+        this.updateHistogram(rollResult.summary);
+
+        // Update counts in the same pass
+        if (rollResult.summary.successes - rollResult.summary.failures > 0) {
+          successCount++;
+          if (rollResult.summary.advantages - rollResult.summary.threats > 0) {
+            netPositiveCount++;
+          }
+        }
+        if (rollResult.summary.triumphs > 0) criticalSuccessCount++;
+        if (rollResult.summary.despair > 0) criticalFailureCount++;
       }
+
+      // Calculate probabilities without additional array iterations
+      const successProbability = successCount / this.iterations;
+      const criticalSuccessProbability = criticalSuccessCount / this.iterations;
+      const criticalFailureProbability = criticalFailureCount / this.iterations;
+      const netPositiveProbability = netPositiveCount / this.iterations;
+
+      // Calculate analysis for each histogram category
+      const analysis = {
+        netSuccesses: this.analyzeDistribution(
+          this.histogram.netSuccesses,
+          this.iterations,
+        ),
+        netAdvantages: this.analyzeDistribution(
+          this.histogram.netAdvantages,
+          this.iterations,
+        ),
+        triumphs: this.analyzeDistribution(
+          this.histogram.triumphs,
+          this.iterations,
+        ),
+        despairs: this.analyzeDistribution(
+          this.histogram.despairs,
+          this.iterations,
+        ),
+        lightSide: this.analyzeDistribution(
+          this.histogram.lightSide,
+          this.iterations,
+        ),
+        darkSide: this.analyzeDistribution(
+          this.histogram.darkSide,
+          this.iterations,
+        ),
+      };
 
       return {
         averages: this.calculateAverages(),
         medians: this.calculateMedians(),
         standardDeviations: this.calculateStandardDeviations(),
-        successProbability: this.calculateSuccessProbability(),
-        criticalSuccessProbability: this.calculateCriticalSuccessProbability(),
-        criticalFailureProbability: this.calculateCriticalFailureProbability(),
-        netPositiveProbability: this.calculateNetPositiveProbability(),
+        successProbability,
+        criticalSuccessProbability,
+        criticalFailureProbability,
+        netPositiveProbability,
+        histogram: this.histogram,
+        analysis,
       };
     } catch (error) {
       if (error instanceof Error) {
@@ -116,6 +332,45 @@ export class MonteCarlo {
       }
       throw new MonteCarloError("Simulation failed with unknown error");
     }
+  }
+
+  private resetHistogram(): void {
+    this.histogram = {
+      netSuccesses: {},
+      netAdvantages: {},
+      triumphs: {},
+      despairs: {},
+      lightSide: {},
+      darkSide: {},
+    };
+  }
+
+  private updateHistogram(result: DiceResult): void {
+    // Update net successes
+    const netSuccesses = result.successes - result.failures;
+    this.histogram.netSuccesses[netSuccesses] =
+      (this.histogram.netSuccesses[netSuccesses] || 0) + 1;
+
+    // Update net advantages
+    const netAdvantages = result.advantages - result.threats;
+    this.histogram.netAdvantages[netAdvantages] =
+      (this.histogram.netAdvantages[netAdvantages] || 0) + 1;
+
+    // Update triumphs
+    this.histogram.triumphs[result.triumphs] =
+      (this.histogram.triumphs[result.triumphs] || 0) + 1;
+
+    // Update despairs
+    this.histogram.despairs[result.despair] =
+      (this.histogram.despairs[result.despair] || 0) + 1;
+
+    // Update light side
+    this.histogram.lightSide[result.lightSide] =
+      (this.histogram.lightSide[result.lightSide] || 0) + 1;
+
+    // Update dark side
+    this.histogram.darkSide[result.darkSide] =
+      (this.histogram.darkSide[result.darkSide] || 0) + 1;
   }
 
   private calculateAverages(): DiceResult {
@@ -157,34 +412,53 @@ export class MonteCarlo {
     };
   }
 
-  private calculateSuccessProbability(): number {
-    return (
-      this.results.filter((r) => r.successes - r.failures > 0).length /
-      this.iterations
-    );
+  private calculatePercentiles(
+    histogram: { [key: number]: number },
+    totalCount: number,
+  ): { [key: number]: number } {
+    const sortedEntries = Object.entries(histogram)
+      .map(([value, count]) => ({ value: parseInt(value), count }))
+      .sort((a, b) => a.value - b.value);
+
+    const percentiles: { [key: number]: number } = {};
+    let runningCount = 0;
+
+    // Calculate percentiles at specific points
+    const targetPercentiles = [25, 50, 75, 90];
+    let currentTargetIndex = 0;
+
+    for (const { value, count } of sortedEntries) {
+      runningCount += count;
+      const currentPercentile = (runningCount / totalCount) * 100;
+
+      // Check if we've passed any target percentiles
+      while (
+        currentTargetIndex < targetPercentiles.length &&
+        currentPercentile >= targetPercentiles[currentTargetIndex]
+      ) {
+        percentiles[targetPercentiles[currentTargetIndex]] = value;
+        currentTargetIndex++;
+      }
+    }
+
+    // If we haven't reached all target percentiles, use the maximum value
+    while (currentTargetIndex < targetPercentiles.length) {
+      percentiles[targetPercentiles[currentTargetIndex]] =
+        sortedEntries[sortedEntries.length - 1].value;
+      currentTargetIndex++;
+    }
+
+    return percentiles;
   }
 
-  private calculateCriticalSuccessProbability(): number {
-    return this.results.filter((r) => r.triumphs > 0).length / this.iterations;
-  }
+  private findModes(histogram: { [key: number]: number }): number[] {
+    const entries = Object.entries(histogram);
+    if (entries.length === 0) return [];
 
-  private calculateCriticalFailureProbability(): number {
-    return this.results.filter((r) => r.despair > 0).length / this.iterations;
-  }
-
-  private calculateNetPositiveProbability(): number {
-    return (
-      this.results.filter(
-        (r) => r.successes - r.failures > 0 && r.advantages - r.threats > 0,
-      ).length / this.iterations
-    );
-  }
-
-  private average(selector: (roll: DiceResult) => number): number {
-    return (
-      this.results.reduce((sum, roll) => sum + selector(roll), 0) /
-      this.iterations
-    );
+    const maxCount = Math.max(...entries.map(([, count]) => count));
+    return entries
+      .filter(([, count]) => count === maxCount)
+      .map(([value]) => parseInt(value));
   }
 
   private median(selector: (roll: DiceResult) => number): number {
@@ -193,16 +467,5 @@ export class MonteCarlo {
     return values.length % 2
       ? values[mid]
       : (values[mid - 1] + values[mid]) / 2;
-  }
-
-  private standardDeviation(selector: (roll: DiceResult) => number): number {
-    const avg = this.average(selector);
-    const squareDiffs = this.results.map((roll) => {
-      const diff = selector(roll) - avg;
-      return diff * diff;
-    });
-    return Math.sqrt(
-      squareDiffs.reduce((sum, diff) => sum + diff, 0) / this.iterations,
-    );
   }
 }

@@ -252,7 +252,146 @@ interface MonteCarloResult {
 
   // Probability of both net successes and net advantages > 0
   netPositiveProbability: number;
+
+  // Histogram data for distribution analysis
+  histogram: HistogramData;
+
+  // Detailed analysis of distributions
+  analysis: {
+    netSuccesses: DistributionAnalysis;
+    netAdvantages: DistributionAnalysis;
+    triumphs: DistributionAnalysis;
+    despairs: DistributionAnalysis;
+    lightSide: DistributionAnalysis;
+    darkSide: DistributionAnalysis;
+  };
 }
+```
+
+### Histogram Analysis
+
+The Monte Carlo simulation now includes detailed distribution analysis through histograms. This feature helps you understand not just the averages and probabilities, but the entire shape and pattern of possible outcomes.
+
+#### Histogram Data
+
+The histogram data shows the frequency of each possible outcome:
+
+```typescript
+const simulation = new MonteCarlo(pool);
+const results = simulation.simulate();
+
+// Access histogram data
+console.log("Net Successes Distribution:", results.histogram.netSuccesses);
+console.log("Net Advantages Distribution:", results.histogram.netAdvantages);
+
+// Example output:
+// Net Successes Distribution: { "-1": 150, "0": 300, "1": 400, "2": 150 }
+// This means:
+// - 150 rolls had -1 net successes
+// - 300 rolls had 0 net successes
+// - 400 rolls had 1 net success
+// - 150 rolls had 2 net successes
+```
+
+#### Distribution Analysis
+
+Each distribution includes detailed statistical analysis:
+
+```typescript
+const successAnalysis = results.analysis.netSuccesses;
+
+// Shape of the distribution
+console.log("Skewness:", successAnalysis.skewness); // Positive = right-skewed, Negative = left-skewed
+console.log("Kurtosis:", successAnalysis.kurtosis); // Positive = heavy tails, Negative = light tails
+
+// Most common outcomes
+console.log("Modes:", successAnalysis.modes); // Array of most frequent values
+
+// Unusual results
+console.log("Outliers:", successAnalysis.outliers); // Values > 2 standard deviations from mean
+
+// Key percentiles
+console.log("25th percentile:", successAnalysis.percentiles[25]); // 25% of rolls are below this
+console.log("Median:", successAnalysis.percentiles[50]); // 50% of rolls are below this
+console.log("75th percentile:", successAnalysis.percentiles[75]); // 75% of rolls are below this
+console.log("90th percentile:", successAnalysis.percentiles[90]); // 90% of rolls are below this
+```
+
+#### How to Interpret Distribution Analysis
+
+1. **Skewness**:
+
+   - Positive: More extreme positive results than negative
+   - Negative: More extreme negative results than positive
+   - Near 0: Roughly symmetric distribution
+
+2. **Kurtosis**:
+
+   - Positive: More extreme results than a normal distribution
+   - Negative: Fewer extreme results than a normal distribution
+   - Near 0: Similar to a normal distribution
+
+3. **Modes**:
+
+   - Single mode: One clear "most common" result
+   - Multiple modes: Several equally common results
+   - Helps identify typical outcomes
+
+4. **Outliers**:
+
+   - Unusual or extreme results
+   - More than 2 standard deviations from the mean
+   - Useful for understanding rare outcomes
+
+5. **Percentiles**:
+   - 25th: "Worst quarter" threshold
+   - 50th: Median result
+   - 75th: "Best quarter" threshold
+   - 90th: "Exceptional" threshold
+
+#### Example Usage
+
+```typescript
+const pool: DicePool = {
+  abilityDice: 2,
+  proficiencyDice: 1,
+  difficultyDice: 2,
+};
+
+const simulation = new MonteCarlo(pool);
+const results = simulation.simulate();
+
+// Analyze net successes distribution
+const { netSuccesses } = results.analysis;
+
+console.log("Distribution Shape:");
+console.log(`- Skewness: ${netSuccesses.skewness.toFixed(2)}`);
+console.log(`- Kurtosis: ${netSuccesses.kurtosis.toFixed(2)}`);
+
+console.log("\nTypical Results:");
+console.log(`- Most common outcomes: ${netSuccesses.modes.join(", ")}`);
+console.log(
+  `- Middle 50% range: ${netSuccesses.percentiles[25]} to ${netSuccesses.percentiles[75]}`,
+);
+
+console.log("\nUnusual Results:");
+console.log(`- Outliers: ${netSuccesses.outliers.join(", ")}`);
+console.log(
+  `- 90th percentile (exceptional results): ${netSuccesses.percentiles[90]}`,
+);
+
+// Example output:
+// Distribution Shape:
+// - Skewness: 0.12 (slightly right-skewed)
+// - Kurtosis: -0.20 (slightly lighter tails than normal)
+//
+// Typical Results:
+// - Most common outcomes: 1
+// - Middle 50% range: 0 to 2
+//
+// Unusual Results:
+// - Outliers: -2, 4
+// - 90th percentile (exceptional results): 3
 ```
 
 ### Error Handling
