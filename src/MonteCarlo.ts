@@ -95,6 +95,7 @@ export class MonteCarlo {
     sumSquaredAdvantages: 0,
     sumSquaredThreats: 0,
   };
+  private results: DiceResult[] = [];
 
   constructor(
     dicePool: DicePool,
@@ -262,40 +263,58 @@ export class MonteCarlo {
     };
   }
 
-  private average(selector: (roll: DiceResult) => number): number {
-    const cacheKey = `avg_${selector.name}`;
+  private average(
+    selector: ((roll: DiceResult) => number) | { name: string },
+  ): number {
+    const selectorName =
+      typeof selector === "function"
+        ? selector.name || "custom"
+        : selector.name;
+    const cacheKey = `avg_${selectorName}`;
     if (this.statsCache.has(cacheKey)) {
       return this.statsCache.get(cacheKey)!;
     }
 
     let sum = 0;
-    switch (selector.name) {
-      case "successes":
-        sum = this.runningStats.sumSuccesses;
-        break;
-      case "advantages":
-        sum = this.runningStats.sumAdvantages;
-        break;
-      case "triumphs":
-        sum = this.runningStats.sumTriumphs;
-        break;
-      case "failures":
-        sum = this.runningStats.sumFailures;
-        break;
-      case "threats":
-        sum = this.runningStats.sumThreats;
-        break;
-      case "despair":
-        sum = this.runningStats.sumDespair;
-        break;
-      case "lightSide":
-        sum = this.runningStats.sumLightSide;
-        break;
-      case "darkSide":
-        sum = this.runningStats.sumDarkSide;
-        break;
-      default:
-        throw new MonteCarloError(`Unknown selector: ${selector.name}`);
+    if (typeof selector === "function") {
+      // For function selectors, calculate sum directly
+      sum = this.results.reduce((acc: number, roll: DiceResult) => {
+        const value = selector(roll);
+        if (typeof value !== "number" || isNaN(value)) {
+          throw new MonteCarloError(`Invalid selector result: ${value}`);
+        }
+        return acc + value;
+      }, 0);
+    } else {
+      // For named selectors, use running stats
+      switch (selector.name) {
+        case "successes":
+          sum = this.runningStats.sumSuccesses;
+          break;
+        case "advantages":
+          sum = this.runningStats.sumAdvantages;
+          break;
+        case "triumphs":
+          sum = this.runningStats.sumTriumphs;
+          break;
+        case "failures":
+          sum = this.runningStats.sumFailures;
+          break;
+        case "threats":
+          sum = this.runningStats.sumThreats;
+          break;
+        case "despair":
+          sum = this.runningStats.sumDespair;
+          break;
+        case "lightSide":
+          sum = this.runningStats.sumLightSide;
+          break;
+        case "darkSide":
+          sum = this.runningStats.sumDarkSide;
+          break;
+        default:
+          throw new MonteCarloError(`Unknown selector: ${selector.name}`);
+      }
     }
 
     const avg = sum / this.iterations;
@@ -303,48 +322,68 @@ export class MonteCarlo {
     return avg;
   }
 
-  private standardDeviation(selector: (roll: DiceResult) => number): number {
-    const cacheKey = `std_${selector.name}`;
+  private standardDeviation(
+    selector: ((roll: DiceResult) => number) | { name: string },
+  ): number {
+    const selectorName =
+      typeof selector === "function"
+        ? selector.name || "custom"
+        : selector.name;
+    const cacheKey = `std_${selectorName}`;
     if (this.statsCache.has(cacheKey)) {
       return this.statsCache.get(cacheKey)!;
     }
 
     const avg = this.average(selector);
     let squareSum = 0;
-    switch (selector.name) {
-      case "successes":
-        squareSum = this.runningStats.sumSquaredSuccesses;
-        break;
-      case "advantages":
-        squareSum = this.runningStats.sumSquaredAdvantages;
-        break;
-      case "threats":
-        squareSum = this.runningStats.sumSquaredThreats;
-        break;
-      case "triumphs":
-        squareSum =
-          this.runningStats.sumTriumphs * this.runningStats.sumTriumphs;
-        break;
-      case "failures":
-        squareSum =
-          this.runningStats.sumFailures * this.runningStats.sumFailures;
-        break;
-      case "despair":
-        squareSum = this.runningStats.sumDespair * this.runningStats.sumDespair;
-        break;
-      case "lightSide":
-        squareSum =
-          this.runningStats.sumLightSide * this.runningStats.sumLightSide;
-        break;
-      case "darkSide":
-        squareSum =
-          this.runningStats.sumDarkSide * this.runningStats.sumDarkSide;
-        break;
-      default:
-        throw new MonteCarloError(`Unknown selector: ${selector.name}`);
+
+    if (typeof selector === "function") {
+      // For function selectors, calculate square sum directly
+      squareSum = this.results.reduce((acc: number, roll: DiceResult) => {
+        const value = selector(roll);
+        if (typeof value !== "number" || isNaN(value)) {
+          throw new MonteCarloError(`Invalid selector result: ${value}`);
+        }
+        return acc + value * value;
+      }, 0);
+    } else {
+      // For named selectors, use running stats
+      switch (selector.name) {
+        case "successes":
+          squareSum = this.runningStats.sumSquaredSuccesses;
+          break;
+        case "advantages":
+          squareSum = this.runningStats.sumSquaredAdvantages;
+          break;
+        case "threats":
+          squareSum = this.runningStats.sumSquaredThreats;
+          break;
+        case "triumphs":
+          squareSum =
+            this.runningStats.sumTriumphs * this.runningStats.sumTriumphs;
+          break;
+        case "failures":
+          squareSum =
+            this.runningStats.sumFailures * this.runningStats.sumFailures;
+          break;
+        case "despair":
+          squareSum =
+            this.runningStats.sumDespair * this.runningStats.sumDespair;
+          break;
+        case "lightSide":
+          squareSum =
+            this.runningStats.sumLightSide * this.runningStats.sumLightSide;
+          break;
+        case "darkSide":
+          squareSum =
+            this.runningStats.sumDarkSide * this.runningStats.sumDarkSide;
+          break;
+        default:
+          throw new MonteCarloError(`Unknown selector: ${selector.name}`);
+      }
     }
 
-    const stdDev = Math.sqrt(squareSum / this.iterations - avg * avg);
+    const stdDev = Math.sqrt(Math.abs(squareSum / this.iterations - avg * avg));
     this.statsCache.set(cacheKey, stdDev);
     return stdDev;
   }
@@ -420,10 +459,12 @@ export class MonteCarlo {
       this.resetHistogram();
       this.resetRunningStats();
       this.statsCache.clear();
+      this.results = [];
 
       // Run simulations and update histograms in a single pass
       for (let i = 0; i < this.iterations; i++) {
         const rollResult = roll(this.dicePool);
+        this.results.push(rollResult.summary);
         this.updateHistogram(rollResult.summary);
       }
 

@@ -758,7 +758,7 @@ describe("MonteCarlo", () => {
       );
       // @ts-ignore - Testing invalid selector
       expect(() =>
-        monteCarlo["standardDeviation"]({ name: "unknown" }),
+        monteCarlo["standardDeviation"]((roll) => roll.unknown),
       ).toThrow(MonteCarloError);
     });
 
@@ -802,14 +802,14 @@ describe("MonteCarlo", () => {
 
       // Test cache misses for average
       // @ts-ignore - Testing private method
-      const avgSuccesses = monteCarlo["average"]({ name: "successes" });
+      const avgSuccesses = monteCarlo["average"]((roll) => roll.successes);
       expect(avgSuccesses).toBeGreaterThanOrEqual(0);
 
       // Test cache misses for standard deviation
       // @ts-ignore - Testing private method
-      const stdDevSuccesses = monteCarlo["standardDeviation"]({
-        name: "successes",
-      });
+      const stdDevSuccesses = monteCarlo["standardDeviation"](
+        (roll) => roll.successes,
+      );
       expect(stdDevSuccesses).toBeGreaterThanOrEqual(0);
     });
 
@@ -1092,57 +1092,72 @@ describe("MonteCarlo", () => {
         sumSquaredThreats: 60,
       };
 
+      // Set test results with varying values
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["results"] = Array(250)
+        .fill(0)
+        .map((_, i) => ({
+          successes: i % 2,
+          advantages: i % 3,
+          triumphs: i % 2,
+          failures: i % 3,
+          threats: i % 2,
+          despair: i % 2,
+          lightSide: i % 3,
+          darkSide: i % 2,
+        }));
+
       // Clear the cache to force recalculation
       // @ts-ignore - Accessing private property for testing
       monteCarlo["statsCache"] = new Map();
 
       // Test with a valid selector
       // @ts-ignore - Testing private method
-      const stdDevSuccesses = monteCarlo["standardDeviation"]({
-        name: "successes",
-      });
+      const stdDevSuccesses = monteCarlo["standardDeviation"](
+        (roll) => roll.successes,
+      );
       expect(stdDevSuccesses).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevAdvantages = monteCarlo["standardDeviation"]({
-        name: "advantages",
-      });
+      const stdDevAdvantages = monteCarlo["standardDeviation"](
+        (roll) => roll.advantages,
+      );
       expect(stdDevAdvantages).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevThreats = monteCarlo["standardDeviation"]({
-        name: "threats",
-      });
+      const stdDevThreats = monteCarlo["standardDeviation"](
+        (roll) => roll.threats,
+      );
       expect(stdDevThreats).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevTriumphs = monteCarlo["standardDeviation"]({
-        name: "triumphs",
-      });
+      const stdDevTriumphs = monteCarlo["standardDeviation"](
+        (roll) => roll.triumphs,
+      );
       expect(stdDevTriumphs).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevFailures = monteCarlo["standardDeviation"]({
-        name: "failures",
-      });
+      const stdDevFailures = monteCarlo["standardDeviation"](
+        (roll) => roll.failures,
+      );
       expect(stdDevFailures).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevDespair = monteCarlo["standardDeviation"]({
-        name: "despair",
-      });
+      const stdDevDespair = monteCarlo["standardDeviation"](
+        (roll) => roll.despair,
+      );
       expect(stdDevDespair).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevLightSide = monteCarlo["standardDeviation"]({
-        name: "lightSide",
-      });
+      const stdDevLightSide = monteCarlo["standardDeviation"](
+        (roll) => roll.lightSide,
+      );
       expect(stdDevLightSide).toBeGreaterThan(0);
 
       // @ts-ignore - Testing private method
-      const stdDevDarkSide = monteCarlo["standardDeviation"]({
-        name: "darkSide",
-      });
+      const stdDevDarkSide = monteCarlo["standardDeviation"](
+        (roll) => roll.darkSide,
+      );
       expect(stdDevDarkSide).toBeGreaterThan(0);
     });
   });
