@@ -758,7 +758,7 @@ describe("MonteCarlo", () => {
       );
       // @ts-ignore - Testing invalid selector
       expect(() =>
-        monteCarlo["standardDeviation"]((roll) => roll.unknown),
+        monteCarlo["standardDeviation"]({ name: "unknown" }),
       ).toThrow(MonteCarloError);
     });
 
