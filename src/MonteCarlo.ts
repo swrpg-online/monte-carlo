@@ -51,7 +51,6 @@ export interface MonteCarloResult {
 export class MonteCarlo {
   private readonly dicePool: DicePool;
   private readonly iterations: number;
-  private results: DiceResult[] = [];
   private histogram: HistogramData = {
     netSuccesses: {},
     netAdvantages: {},
@@ -62,14 +61,54 @@ export class MonteCarlo {
   };
   private static readonly MIN_ITERATIONS = 100;
   private static readonly MAX_ITERATIONS = 1000000;
-  // Cache for statistical calculations
   private statsCache: Map<string, number> = new Map();
+  private runningStats: {
+    successCount: number;
+    criticalSuccessCount: number;
+    criticalFailureCount: number;
+    netPositiveCount: number;
+    sumSuccesses: number;
+    sumAdvantages: number;
+    sumTriumphs: number;
+    sumFailures: number;
+    sumThreats: number;
+    sumDespair: number;
+    sumLightSide: number;
+    sumDarkSide: number;
+    sumSquaredSuccesses: number;
+    sumSquaredAdvantages: number;
+    sumSquaredThreats: number;
+  } = {
+    successCount: 0,
+    criticalSuccessCount: 0,
+    criticalFailureCount: 0,
+    netPositiveCount: 0,
+    sumSuccesses: 0,
+    sumAdvantages: 0,
+    sumTriumphs: 0,
+    sumFailures: 0,
+    sumThreats: 0,
+    sumDespair: 0,
+    sumLightSide: 0,
+    sumDarkSide: 0,
+    sumSquaredSuccesses: 0,
+    sumSquaredAdvantages: 0,
+    sumSquaredThreats: 0,
+  };
 
-  constructor(dicePool: DicePool, iterations: number = 10000) {
+  constructor(
+    dicePool: DicePool,
+    iterations: number = 10000,
+    runSimulate: boolean = true,
+  ) {
     this.validateDicePool(dicePool);
     this.validateIterations(iterations);
     this.dicePool = dicePool;
     this.iterations = iterations;
+    this.resetRunningStats();
+    if (runSimulate) {
+      this.simulate();
+    }
   }
 
   private validateDicePool(dicePool: DicePool): void {
@@ -224,68 +263,245 @@ export class MonteCarlo {
   }
 
   private average(selector: (roll: DiceResult) => number): number {
-    const cacheKey = selector.toString();
+    const cacheKey = `avg_${selector.name}`;
     if (this.statsCache.has(cacheKey)) {
       return this.statsCache.get(cacheKey)!;
     }
 
-    const avg =
-      this.results.reduce((sum, roll) => sum + selector(roll), 0) /
-      this.iterations;
+    let sum = 0;
+    switch (selector.name) {
+      case "successes":
+        sum = this.runningStats.sumSuccesses;
+        break;
+      case "advantages":
+        sum = this.runningStats.sumAdvantages;
+        break;
+      case "triumphs":
+        sum = this.runningStats.sumTriumphs;
+        break;
+      case "failures":
+        sum = this.runningStats.sumFailures;
+        break;
+      case "threats":
+        sum = this.runningStats.sumThreats;
+        break;
+      case "despair":
+        sum = this.runningStats.sumDespair;
+        break;
+      case "lightSide":
+        sum = this.runningStats.sumLightSide;
+        break;
+      case "darkSide":
+        sum = this.runningStats.sumDarkSide;
+        break;
+      default:
+        throw new MonteCarloError(`Unknown selector: ${selector.name}`);
+    }
+
+    const avg = sum / this.iterations;
     this.statsCache.set(cacheKey, avg);
     return avg;
   }
 
   private standardDeviation(selector: (roll: DiceResult) => number): number {
-    const cacheKey = `std_${selector.toString()}`;
+    const cacheKey = `std_${selector.name}`;
     if (this.statsCache.has(cacheKey)) {
       return this.statsCache.get(cacheKey)!;
     }
 
     const avg = this.average(selector);
-    const squareSum = this.results.reduce((sum, roll) => {
-      const diff = selector(roll) - avg;
-      return sum + diff * diff;
-    }, 0);
+    let squareSum = 0;
+    switch (selector.name) {
+      case "successes":
+        squareSum = this.runningStats.sumSquaredSuccesses;
+        break;
+      case "advantages":
+        squareSum = this.runningStats.sumSquaredAdvantages;
+        break;
+      case "threats":
+        squareSum = this.runningStats.sumSquaredThreats;
+        break;
+      case "triumphs":
+        squareSum =
+          this.runningStats.sumTriumphs * this.runningStats.sumTriumphs;
+        break;
+      case "failures":
+        squareSum =
+          this.runningStats.sumFailures * this.runningStats.sumFailures;
+        break;
+      case "despair":
+        squareSum = this.runningStats.sumDespair * this.runningStats.sumDespair;
+        break;
+      case "lightSide":
+        squareSum =
+          this.runningStats.sumLightSide * this.runningStats.sumLightSide;
+        break;
+      case "darkSide":
+        squareSum =
+          this.runningStats.sumDarkSide * this.runningStats.sumDarkSide;
+        break;
+      default:
+        throw new MonteCarloError(`Unknown selector: ${selector.name}`);
+    }
 
-    const stdDev = Math.sqrt(squareSum / this.iterations);
+    const stdDev = Math.sqrt(squareSum / this.iterations - avg * avg);
     this.statsCache.set(cacheKey, stdDev);
     return stdDev;
   }
 
+  private resetRunningStats(): void {
+    this.runningStats = {
+      successCount: 0,
+      criticalSuccessCount: 0,
+      criticalFailureCount: 0,
+      netPositiveCount: 0,
+      sumSuccesses: 0,
+      sumAdvantages: 0,
+      sumTriumphs: 0,
+      sumFailures: 0,
+      sumThreats: 0,
+      sumDespair: 0,
+      sumLightSide: 0,
+      sumDarkSide: 0,
+      sumSquaredSuccesses: 0,
+      sumSquaredAdvantages: 0,
+      sumSquaredThreats: 0,
+    };
+  }
+
+  private updateHistogram(result: DiceResult): void {
+    // Update net successes with direct array access
+    const netSuccesses = result.successes - result.failures;
+    this.histogram.netSuccesses[netSuccesses] =
+      (this.histogram.netSuccesses[netSuccesses] || 0) + 1;
+
+    // Update net advantages with direct array access
+    const netAdvantages = result.advantages - result.threats;
+    this.histogram.netAdvantages[netAdvantages] =
+      (this.histogram.netAdvantages[netAdvantages] || 0) + 1;
+
+    // Update other histograms with direct array access
+    this.histogram.triumphs[result.triumphs] =
+      (this.histogram.triumphs[result.triumphs] || 0) + 1;
+    this.histogram.despairs[result.despair] =
+      (this.histogram.despairs[result.despair] || 0) + 1;
+    this.histogram.lightSide[result.lightSide] =
+      (this.histogram.lightSide[result.lightSide] || 0) + 1;
+    this.histogram.darkSide[result.darkSide] =
+      (this.histogram.darkSide[result.darkSide] || 0) + 1;
+
+    // Update running statistics
+    this.runningStats.sumSuccesses += result.successes;
+    this.runningStats.sumAdvantages += result.advantages;
+    this.runningStats.sumTriumphs += result.triumphs;
+    this.runningStats.sumFailures += result.failures;
+    this.runningStats.sumThreats += result.threats;
+    this.runningStats.sumDespair += result.despair;
+    this.runningStats.sumLightSide += result.lightSide;
+    this.runningStats.sumDarkSide += result.darkSide;
+    this.runningStats.sumSquaredSuccesses +=
+      result.successes * result.successes;
+    this.runningStats.sumSquaredAdvantages +=
+      result.advantages * result.advantages;
+    this.runningStats.sumSquaredThreats += result.threats * result.threats;
+
+    if (netSuccesses > 0) {
+      this.runningStats.successCount++;
+      if (netAdvantages > 0) {
+        this.runningStats.netPositiveCount++;
+      }
+    }
+    if (result.triumphs > 0) this.runningStats.criticalSuccessCount++;
+    if (result.despair > 0) this.runningStats.criticalFailureCount++;
+  }
+
   public simulate(): MonteCarloResult {
     try {
-      this.results = [];
       this.resetHistogram();
+      this.resetRunningStats();
       this.statsCache.clear();
 
       // Run simulations and update histograms in a single pass
-      let successCount = 0;
-      let criticalSuccessCount = 0;
-      let criticalFailureCount = 0;
-      let netPositiveCount = 0;
-
       for (let i = 0; i < this.iterations; i++) {
         const rollResult = roll(this.dicePool);
-        this.results.push(rollResult.summary);
         this.updateHistogram(rollResult.summary);
-
-        // Update counts in the same pass
-        if (rollResult.summary.successes - rollResult.summary.failures > 0) {
-          successCount++;
-          if (rollResult.summary.advantages - rollResult.summary.threats > 0) {
-            netPositiveCount++;
-          }
-        }
-        if (rollResult.summary.triumphs > 0) criticalSuccessCount++;
-        if (rollResult.summary.despair > 0) criticalFailureCount++;
       }
 
-      // Calculate probabilities without additional array iterations
-      const successProbability = successCount / this.iterations;
-      const criticalSuccessProbability = criticalSuccessCount / this.iterations;
-      const criticalFailureProbability = criticalFailureCount / this.iterations;
-      const netPositiveProbability = netPositiveCount / this.iterations;
+      // Calculate probabilities using running statistics
+      const successProbability =
+        this.runningStats.successCount / this.iterations;
+      const criticalSuccessProbability =
+        this.runningStats.criticalSuccessCount / this.iterations;
+      const criticalFailureProbability =
+        this.runningStats.criticalFailureCount / this.iterations;
+      const netPositiveProbability =
+        this.runningStats.netPositiveCount / this.iterations;
+
+      // Calculate averages using running statistics
+      const averages = {
+        successes: this.runningStats.sumSuccesses / this.iterations,
+        advantages: this.runningStats.sumAdvantages / this.iterations,
+        triumphs: this.runningStats.sumTriumphs / this.iterations,
+        failures: this.runningStats.sumFailures / this.iterations,
+        threats: this.runningStats.sumThreats / this.iterations,
+        despair: this.runningStats.sumDespair / this.iterations,
+        lightSide: this.runningStats.sumLightSide / this.iterations,
+        darkSide: this.runningStats.sumDarkSide / this.iterations,
+      };
+
+      // Calculate standard deviations using running statistics
+      const standardDeviations = {
+        successes: Math.sqrt(
+          this.runningStats.sumSquaredSuccesses / this.iterations -
+            averages.successes * averages.successes,
+        ),
+        advantages: Math.sqrt(
+          this.runningStats.sumSquaredAdvantages / this.iterations -
+            averages.advantages * averages.advantages,
+        ),
+        triumphs: Math.sqrt(
+          this.runningStats.sumTriumphs / this.iterations -
+            averages.triumphs * averages.triumphs,
+        ),
+        failures: Math.sqrt(
+          this.runningStats.sumFailures / this.iterations -
+            averages.failures * averages.failures,
+        ),
+        threats: Math.sqrt(
+          this.runningStats.sumSquaredThreats / this.iterations -
+            averages.threats * averages.threats,
+        ),
+        despair: Math.sqrt(
+          this.runningStats.sumDespair / this.iterations -
+            averages.despair * averages.despair,
+        ),
+        lightSide: Math.sqrt(
+          this.runningStats.sumLightSide / this.iterations -
+            averages.lightSide * averages.lightSide,
+        ),
+        darkSide: Math.sqrt(
+          this.runningStats.sumDarkSide / this.iterations -
+            averages.darkSide * averages.darkSide,
+        ),
+      };
+
+      // Calculate medians using histogram data
+      const medians = {
+        successes: this.calculateMedianFromHistogram(
+          this.histogram.netSuccesses,
+        ),
+        advantages: this.calculateMedianFromHistogram(
+          this.histogram.netAdvantages,
+        ),
+        triumphs: this.calculateMedianFromHistogram(this.histogram.triumphs),
+        failures: this.calculateMedianFromHistogram(this.histogram.despairs),
+        threats: this.calculateMedianFromHistogram(
+          this.histogram.netAdvantages,
+        ),
+        despair: this.calculateMedianFromHistogram(this.histogram.despairs),
+        lightSide: this.calculateMedianFromHistogram(this.histogram.lightSide),
+        darkSide: this.calculateMedianFromHistogram(this.histogram.darkSide),
+      };
 
       // Calculate analysis for each histogram category
       const analysis = {
@@ -316,9 +532,9 @@ export class MonteCarlo {
       };
 
       return {
-        averages: this.calculateAverages(),
-        medians: this.calculateMedians(),
-        standardDeviations: this.calculateStandardDeviations(),
+        averages,
+        medians,
+        standardDeviations,
         successProbability,
         criticalSuccessProbability,
         criticalFailureProbability,
@@ -345,71 +561,38 @@ export class MonteCarlo {
     };
   }
 
-  private updateHistogram(result: DiceResult): void {
-    // Update net successes
-    const netSuccesses = result.successes - result.failures;
-    this.histogram.netSuccesses[netSuccesses] =
-      (this.histogram.netSuccesses[netSuccesses] || 0) + 1;
+  private calculateMedianFromHistogram(histogram: {
+    [key: number]: number;
+  }): number {
+    const entries = Object.entries(histogram)
+      .map(([value, count]) => ({ value: parseInt(value), count }))
+      .sort((a, b) => a.value - b.value);
 
-    // Update net advantages
-    const netAdvantages = result.advantages - result.threats;
-    this.histogram.netAdvantages[netAdvantages] =
-      (this.histogram.netAdvantages[netAdvantages] || 0) + 1;
+    if (entries.length === 0) {
+      return 0;
+    }
 
-    // Update triumphs
-    this.histogram.triumphs[result.triumphs] =
-      (this.histogram.triumphs[result.triumphs] || 0) + 1;
+    let runningCount = 0;
+    const targetCount = this.iterations / 2;
 
-    // Update despairs
-    this.histogram.despairs[result.despair] =
-      (this.histogram.despairs[result.despair] || 0) + 1;
+    for (const { value, count } of entries) {
+      runningCount += count;
+      if (runningCount >= targetCount) {
+        return value;
+      }
+    }
 
-    // Update light side
-    this.histogram.lightSide[result.lightSide] =
-      (this.histogram.lightSide[result.lightSide] || 0) + 1;
-
-    // Update dark side
-    this.histogram.darkSide[result.darkSide] =
-      (this.histogram.darkSide[result.darkSide] || 0) + 1;
+    return entries[entries.length - 1].value;
   }
 
-  private calculateAverages(): DiceResult {
-    return {
-      successes: this.average((r) => r.successes),
-      advantages: this.average((r) => r.advantages),
-      triumphs: this.average((r) => r.triumphs),
-      failures: this.average((r) => r.failures),
-      threats: this.average((r) => r.threats),
-      despair: this.average((r) => r.despair),
-      lightSide: this.average((r) => r.lightSide),
-      darkSide: this.average((r) => r.darkSide),
-    };
-  }
+  private findModes(histogram: { [key: number]: number }): number[] {
+    const entries = Object.entries(histogram);
+    if (entries.length === 0) return [];
 
-  private calculateMedians(): DiceResult {
-    return {
-      successes: this.median((r) => r.successes),
-      advantages: this.median((r) => r.advantages),
-      triumphs: this.median((r) => r.triumphs),
-      failures: this.median((r) => r.failures),
-      threats: this.median((r) => r.threats),
-      despair: this.median((r) => r.despair),
-      lightSide: this.median((r) => r.lightSide),
-      darkSide: this.median((r) => r.darkSide),
-    };
-  }
-
-  private calculateStandardDeviations(): DiceResult {
-    return {
-      successes: this.standardDeviation((r) => r.successes),
-      advantages: this.standardDeviation((r) => r.advantages),
-      triumphs: this.standardDeviation((r) => r.triumphs),
-      failures: this.standardDeviation((r) => r.failures),
-      threats: this.standardDeviation((r) => r.threats),
-      despair: this.standardDeviation((r) => r.despair),
-      lightSide: this.standardDeviation((r) => r.lightSide),
-      darkSide: this.standardDeviation((r) => r.darkSide),
-    };
+    const maxCount = Math.max(...entries.map(([, count]) => count));
+    return entries
+      .filter(([, count]) => count === maxCount)
+      .map(([value]) => parseInt(value));
   }
 
   private calculatePercentiles(
@@ -420,6 +603,10 @@ export class MonteCarlo {
       .map(([value, count]) => ({ value: parseInt(value), count }))
       .sort((a, b) => a.value - b.value);
 
+    if (sortedEntries.length === 0) {
+      return {};
+    }
+
     const percentiles: { [key: number]: number } = {};
     let runningCount = 0;
 
@@ -427,6 +614,7 @@ export class MonteCarlo {
     const targetPercentiles = [25, 50, 75, 90];
     let currentTargetIndex = 0;
 
+    // Find the value for each percentile
     for (const { value, count } of sortedEntries) {
       runningCount += count;
       const currentPercentile = (runningCount / totalCount) * 100;
@@ -442,30 +630,12 @@ export class MonteCarlo {
     }
 
     // If we haven't reached all target percentiles, use the maximum value
+    const maxValue = sortedEntries[sortedEntries.length - 1].value;
     while (currentTargetIndex < targetPercentiles.length) {
-      percentiles[targetPercentiles[currentTargetIndex]] =
-        sortedEntries[sortedEntries.length - 1].value;
+      percentiles[targetPercentiles[currentTargetIndex]] = maxValue;
       currentTargetIndex++;
     }
 
     return percentiles;
-  }
-
-  private findModes(histogram: { [key: number]: number }): number[] {
-    const entries = Object.entries(histogram);
-    if (entries.length === 0) return [];
-
-    const maxCount = Math.max(...entries.map(([, count]) => count));
-    return entries
-      .filter(([, count]) => count === maxCount)
-      .map(([value]) => parseInt(value));
-  }
-
-  private median(selector: (roll: DiceResult) => number): number {
-    const values = this.results.map(selector).sort((a, b) => a - b);
-    const mid = Math.floor(values.length / 2);
-    return values.length % 2
-      ? values[mid]
-      : (values[mid - 1] + values[mid]) / 2;
   }
 }

@@ -10,6 +10,7 @@ The histogram analysis feature extends the Monte Carlo simulation to provide det
 
 - Uses existing Monte Carlo simulation parameters
 - No additional input parameters required
+- Optional `runSimulate` parameter in constructor to control automatic simulation
 
 ### Output Results
 
@@ -69,13 +70,17 @@ interface MonteCarloResult {
    - Track each roll's results in the histogram data structure
    - Calculate net values (successes - failures, advantages - threats)
    - Count occurrences of each value
-   - Maintain running counts for probabilities in a single pass
+   - Maintain running statistics for efficient calculation
+   - Update histograms with direct array access
+   - Use selector-based caching for statistical calculations
 
 2. Memory Considerations:
    - Use sparse object storage for efficiency
    - Only store non-zero counts
    - Clear intermediate data after final calculations
    - Implement caching for frequently accessed calculations
+   - Use running statistics to avoid storing all results
+   - Cache selector-based calculations with prefixed keys
 
 ### Performance Optimization
 
@@ -85,6 +90,8 @@ interface MonteCarloResult {
    - Calculate probabilities during the main simulation loop
    - Avoid post-processing of results
    - Maintain running counts for all metrics
+   - Use running statistics for averages and standard deviations
+   - Cache selector-based calculations for reuse
 
 2. Memory Management:
 
@@ -92,12 +99,17 @@ interface MonteCarloResult {
    - Cache statistical calculations to avoid redundant computations
    - Clear cache between simulations
    - Minimize temporary array allocations
+   - Avoid storing individual roll results
+   - Use direct array access for histogram updates
+   - Implement prefixed cache keys for better organization
 
 3. Statistical Optimizations:
-   - Calculate mean and variance in a single pass
+   - Calculate mean and variance in a single pass using running statistics
    - Work directly with frequency data for higher moments
    - Cache selector-based calculations (averages, standard deviations)
    - Optimize histogram-based calculations for large datasets
+   - Use running sums for efficient standard deviation calculation
+   - Implement selector-based caching for improved performance
 
 ### Distribution Analysis
 
@@ -107,6 +119,8 @@ interface MonteCarloResult {
    - Direct computation from frequency data
    - Efficient handling of large datasets
    - Prevention of floating-point errors
+   - Use running statistics for improved accuracy
+   - Cache selector-based calculations
 
 2. Skewness Calculation:
 
@@ -114,6 +128,7 @@ interface MonteCarloResult {
    - Optimized for sparse data
    - Handles zero standard deviation cases
    - Uses frequency-weighted calculations
+   - Caches results for reuse
 
 3. Kurtosis Calculation:
 
@@ -121,6 +136,7 @@ interface MonteCarloResult {
    - Frequency-weighted fourth moment calculation
    - Handles zero standard deviation cases
    - Returns excess kurtosis (normal distribution = 0)
+   - Caches results for reuse
 
 4. Outlier Detection:
 
@@ -128,6 +144,7 @@ interface MonteCarloResult {
    - Direct calculation from histogram entries
    - Memory-efficient implementation
    - No array expansion required
+   - Caches results for reuse
 
 5. Mode Calculation:
 
@@ -135,17 +152,19 @@ interface MonteCarloResult {
    - Handles multiple modes
    - Works directly with histogram data
    - Memory-efficient implementation
+   - Caches results for reuse
 
 6. Percentile Calculation:
    - Sorted entry processing
    - Efficient running count maintenance
    - Handles specific target percentiles (25th, 50th, 75th, 90th)
    - Memory-efficient implementation
+   - Caches results for reuse
 
 ## Usage Examples
 
 ```typescript
-const simulation = new MonteCarlo(dicePool);
+const simulation = new MonteCarlo(dicePool, 10000, false); // Optional: disable automatic simulation
 const result = simulation.simulate();
 
 // Access histogram data
@@ -177,6 +196,11 @@ const upperQuartile = successAnalysis.percentiles[75];
    - Validate percentile calculations
    - Test caching mechanism
    - Verify statistical optimizations
+   - Test running statistics accuracy
+   - Validate memory efficiency
+   - Test selector-based caching
+   - Verify cache key prefixes
+   - Test cache misses and hits
 
 2. **Integration Tests**
 
@@ -187,6 +211,9 @@ const upperQuartile = successAnalysis.percentiles[75];
    - Verify analysis matches expected distributions
    - Test memory usage with large datasets
    - Validate cache behavior
+   - Test running statistics consistency
+   - Verify selector-based caching
+   - Test cache key prefixes
 
 3. **Edge Cases**
 
@@ -199,6 +226,11 @@ const upperQuartile = successAnalysis.percentiles[75];
    - Bimodal distributions
    - Large iteration counts
    - Complex dice pools
+   - Memory pressure scenarios
+   - Cache misses with valid selectors
+   - Unknown selector types
+   - Empty histograms
+   - Incomplete percentile data
 
 4. **Performance Tests**
    - Measure execution time for different pool sizes
@@ -206,6 +238,11 @@ const upperQuartile = successAnalysis.percentiles[75];
    - Validate cache hit rates
    - Test scaling with iteration count
    - Compare optimized vs. unoptimized paths
+   - Test memory efficiency with large datasets
+   - Validate running statistics performance
+   - Measure histogram update efficiency
+   - Test selector-based caching performance
+   - Verify cache key prefix efficiency
 
 ## Future Enhancements
 
@@ -223,6 +260,10 @@ const upperQuartile = successAnalysis.percentiles[75];
    - Progressive updates for long-running simulations
    - SIMD operations for statistical calculations
    - WebAssembly implementation for core calculations
+   - Further memory optimizations
+   - Enhanced caching strategies
+   - Improved selector-based caching
+   - Dynamic cache key prefixing
 
 3. **Additional Analysis Features**
    - Confidence intervals
@@ -232,3 +273,5 @@ const upperQuartile = successAnalysis.percentiles[75];
    - Advanced statistical measures
    - Custom percentile configurations
    - Distribution shape classification
+   - Enhanced selector support
+   - Custom cache key formats

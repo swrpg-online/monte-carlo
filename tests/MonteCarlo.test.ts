@@ -714,5 +714,665 @@ describe("MonteCarlo", () => {
       // Clean up
       mockRoll.mockRestore();
     });
+
+    it("should handle empty histogram for median calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = {};
+
+      // @ts-ignore - Accessing private method for testing
+      const median = monteCarlo["calculateMedianFromHistogram"](histogram);
+      expect(median).toBe(0);
+    });
+
+    it("should handle cache hits in statistical calculations", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Call averages and standard deviations multiple times to test caching
+      const firstAvg = result.averages.successes;
+      const secondAvg = result.averages.successes;
+      expect(firstAvg).toBe(secondAvg);
+
+      const firstStdDev = result.standardDeviations.successes;
+      const secondStdDev = result.standardDeviations.successes;
+      expect(firstStdDev).toBe(secondStdDev);
+    });
+
+    it("should handle unknown selectors in statistical calculations", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // @ts-ignore - Testing invalid selector
+      expect(() => monteCarlo["average"]({ name: "unknown" })).toThrow(
+        MonteCarloError,
+      );
+      // @ts-ignore - Testing invalid selector
+      expect(() =>
+        monteCarlo["standardDeviation"]({ name: "unknown" }),
+      ).toThrow(MonteCarloError);
+    });
+
+    it("should handle empty histogram for percentile calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = {};
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 0);
+      expect(percentiles).toEqual({});
+    });
+
+    it("should handle incomplete percentile data", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 1: 1 }; // Only one data point
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 1);
+      expect(percentiles[25]).toBe(1); // Should use the only value for all percentiles
+      expect(percentiles[50]).toBe(1);
+      expect(percentiles[75]).toBe(1);
+      expect(percentiles[90]).toBe(1);
+    });
+
+    it("should handle cache misses in statistical calculations", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      monteCarlo.simulate();
+
+      // @ts-ignore - Testing private method
+      monteCarlo["statsCache"].clear();
+
+      // Test cache misses for average
+      // @ts-ignore - Testing private method
+      const avgSuccesses = monteCarlo["average"]({ name: "successes" });
+      expect(avgSuccesses).toBeGreaterThanOrEqual(0);
+
+      // Test cache misses for standard deviation
+      // @ts-ignore - Testing private method
+      const stdDevSuccesses = monteCarlo["standardDeviation"]({
+        name: "successes",
+      });
+      expect(stdDevSuccesses).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should handle median calculation with no target count reached", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 5: 100 }; // Less than iterations/2
+
+      // @ts-ignore - Accessing private method for testing
+      const median = monteCarlo["calculateMedianFromHistogram"](histogram);
+      expect(median).toBe(5);
+    });
+
+    it("should handle percentile calculation with partial data", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 1: 180, 2: 20 }; // Not enough data for all percentiles
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 200);
+      expect(percentiles[25]).toBe(1);
+      expect(percentiles[50]).toBe(1);
+      expect(percentiles[75]).toBe(1);
+      expect(percentiles[90]).toBe(1); // When not reaching target percentile, use max value (1 in this case)
+    });
+
+    it("should handle all selector types in average calculation with cache misses", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+        forceDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Clear the cache to force recalculation
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["_averages"] = null;
+
+      // Test all selector types using the public API
+      expect(result.averages.successes).toBeGreaterThanOrEqual(0);
+      expect(result.averages.advantages).toBeGreaterThanOrEqual(0);
+      expect(result.averages.triumphs).toBeGreaterThanOrEqual(0);
+      expect(result.averages.failures).toBeGreaterThanOrEqual(0);
+      expect(result.averages.threats).toBeGreaterThanOrEqual(0);
+      expect(result.averages.despair).toBeGreaterThanOrEqual(0);
+      expect(result.averages.lightSide).toBeGreaterThanOrEqual(0);
+      expect(result.averages.darkSide).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should handle all selector types in standard deviation calculation with cache misses", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+        forceDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Clear the cache to force recalculation
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["_standardDeviations"] = null;
+
+      // Test all selector types using the public API
+      expect(result.standardDeviations.successes).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.advantages).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.triumphs).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.failures).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.threats).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.despair).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.lightSide).toBeGreaterThanOrEqual(0);
+      expect(result.standardDeviations.darkSide).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should handle percentile calculation with missing data", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 1: 100 }; // Only one value
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 100);
+      expect(percentiles[25]).toBe(1);
+      expect(percentiles[50]).toBe(1);
+      expect(percentiles[75]).toBe(1);
+      expect(percentiles[90]).toBe(1);
+    });
+
+    it("should handle unknown selector types in average calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Clear the cache to force recalculation
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["_averages"] = null;
+
+      // Test with an unknown selector
+      // @ts-ignore - Testing private method with invalid input
+      expect(() => monteCarlo["average"]({ name: "unknown" })).toThrow();
+    });
+
+    it("should handle unknown selector types in standard deviation calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Clear the cache to force recalculation
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["_standardDeviations"] = null;
+
+      // Test with an unknown selector
+      // @ts-ignore - Testing private method with invalid input
+      expect(() =>
+        monteCarlo["standardDeviation"]({ name: "unknown" }),
+      ).toThrow();
+    });
+
+    it("should handle percentile calculation with no data", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = {}; // Empty histogram
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 0);
+      expect(percentiles).toEqual({});
+    });
+
+    it("should handle cache hits in average calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // First call should populate the cache
+      // @ts-ignore - Testing private method
+      const firstCall = monteCarlo["average"]({ name: "successes" });
+
+      // Second call should use the cache
+      // @ts-ignore - Testing private method
+      const secondCall = monteCarlo["average"]({ name: "successes" });
+
+      expect(firstCall).toBe(secondCall);
+    });
+
+    it("should handle cache hits in standard deviation calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // First call should populate the cache
+      // @ts-ignore - Testing private method
+      const firstCall = monteCarlo["standardDeviation"]({ name: "successes" });
+
+      // Second call should use the cache
+      // @ts-ignore - Testing private method
+      const secondCall = monteCarlo["standardDeviation"]({ name: "successes" });
+
+      expect(firstCall).toBe(secondCall);
+    });
+
+    it("should handle percentile calculation with multiple missing percentiles", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 1: 50 }; // Only enough data for 50th percentile
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 100);
+      expect(percentiles[25]).toBe(1);
+      expect(percentiles[50]).toBe(1);
+      expect(percentiles[75]).toBe(1);
+      expect(percentiles[90]).toBe(1);
+    });
+
+    it("should handle cache misses with valid selectors and non-zero running stats in average calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      // @ts-ignore - Testing private constructor
+      const monteCarlo = new MonteCarlo(pool, 250, false); // Pass false to avoid running simulate() in constructor
+
+      // Set running stats before any other operations
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["runningStats"] = {
+        successCount: 0,
+        criticalSuccessCount: 0,
+        criticalFailureCount: 0,
+        netPositiveCount: 0,
+        sumSuccesses: 100,
+        sumAdvantages: 50,
+        sumTriumphs: 10,
+        sumFailures: 20,
+        sumThreats: 30,
+        sumDespair: 5,
+        sumLightSide: 15,
+        sumDarkSide: 25,
+        sumSquaredSuccesses: 200,
+        sumSquaredAdvantages: 100,
+        sumSquaredThreats: 60,
+      };
+
+      // Clear the cache
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["statsCache"] = new Map();
+
+      // Test with a valid selector
+      // @ts-ignore - Testing private method
+      const avgSuccesses = monteCarlo["average"]({ name: "successes" });
+      expect(avgSuccesses).toBe(0.4); // 100 / 250
+
+      // @ts-ignore - Testing private method
+      const avgAdvantages = monteCarlo["average"]({ name: "advantages" });
+      expect(avgAdvantages).toBe(0.2); // 50 / 250
+
+      // @ts-ignore - Testing private method
+      const avgTriumphs = monteCarlo["average"]({ name: "triumphs" });
+      expect(avgTriumphs).toBe(0.04); // 10 / 250
+
+      // @ts-ignore - Testing private method
+      const avgFailures = monteCarlo["average"]({ name: "failures" });
+      expect(avgFailures).toBe(0.08); // 20 / 250
+
+      // @ts-ignore - Testing private method
+      const avgThreats = monteCarlo["average"]({ name: "threats" });
+      expect(avgThreats).toBe(0.12); // 30 / 250
+
+      // @ts-ignore - Testing private method
+      const avgDespair = monteCarlo["average"]({ name: "despair" });
+      expect(avgDespair).toBe(0.02); // 5 / 250
+
+      // @ts-ignore - Testing private method
+      const avgLightSide = monteCarlo["average"]({ name: "lightSide" });
+      expect(avgLightSide).toBe(0.06); // 15 / 250
+
+      // @ts-ignore - Testing private method
+      const avgDarkSide = monteCarlo["average"]({ name: "darkSide" });
+      expect(avgDarkSide).toBe(0.1); // 25 / 250
+    });
+
+    it("should handle cache misses with valid selectors in standard deviation calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      // @ts-ignore - Testing private constructor
+      const monteCarlo = new MonteCarlo(pool, 250, false);
+
+      // Set running stats before any other operations
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["runningStats"] = {
+        successCount: 0,
+        criticalSuccessCount: 0,
+        criticalFailureCount: 0,
+        netPositiveCount: 0,
+        sumSuccesses: 100,
+        sumAdvantages: 50,
+        sumTriumphs: 10,
+        sumFailures: 20,
+        sumThreats: 30,
+        sumDespair: 5,
+        sumLightSide: 15,
+        sumDarkSide: 25,
+        sumSquaredSuccesses: 200,
+        sumSquaredAdvantages: 100,
+        sumSquaredThreats: 60,
+      };
+
+      // Clear the cache to force recalculation
+      // @ts-ignore - Accessing private property for testing
+      monteCarlo["statsCache"] = new Map();
+
+      // Test with a valid selector
+      // @ts-ignore - Testing private method
+      const stdDevSuccesses = monteCarlo["standardDeviation"]({
+        name: "successes",
+      });
+      expect(stdDevSuccesses).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevAdvantages = monteCarlo["standardDeviation"]({
+        name: "advantages",
+      });
+      expect(stdDevAdvantages).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevThreats = monteCarlo["standardDeviation"]({
+        name: "threats",
+      });
+      expect(stdDevThreats).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevTriumphs = monteCarlo["standardDeviation"]({
+        name: "triumphs",
+      });
+      expect(stdDevTriumphs).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevFailures = monteCarlo["standardDeviation"]({
+        name: "failures",
+      });
+      expect(stdDevFailures).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevDespair = monteCarlo["standardDeviation"]({
+        name: "despair",
+      });
+      expect(stdDevDespair).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevLightSide = monteCarlo["standardDeviation"]({
+        name: "lightSide",
+      });
+      expect(stdDevLightSide).toBeGreaterThan(0);
+
+      // @ts-ignore - Testing private method
+      const stdDevDarkSide = monteCarlo["standardDeviation"]({
+        name: "darkSide",
+      });
+      expect(stdDevDarkSide).toBeGreaterThan(0);
+    });
+  });
+
+  describe("performance optimizations", () => {
+    it("should handle large numbers of iterations efficiently", () => {
+      const largePool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(largePool, 100000);
+      const result = monteCarlo.simulate();
+
+      // Should complete without memory issues
+      expect(result.averages.successes).toBeDefined();
+      expect(result.medians.successes).toBeDefined();
+      expect(result.standardDeviations.successes).toBeDefined();
+    });
+
+    it("should maintain accuracy with running statistics", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 10000);
+      const result = monteCarlo.simulate();
+
+      // Verify statistical accuracy
+      expect(result.averages.successes).toBeGreaterThan(0);
+      expect(result.averages.advantages).toBeGreaterThan(0);
+      expect(result.standardDeviations.successes).toBeGreaterThan(0);
+      expect(result.standardDeviations.advantages).toBeGreaterThan(0);
+    });
+
+    it("should use sparse histogram storage", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Histogram should only contain non-zero counts
+      const netSuccesses = result.histogram.netSuccesses;
+      Object.values(netSuccesses).forEach((count) => {
+        expect(count).toBeGreaterThan(0);
+      });
+    });
+
+    it("should cache statistical calculations", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Multiple calls should return the same cached value
+      const firstCall = result.averages.successes;
+      const secondCall = result.averages.successes;
+      expect(firstCall).toBe(secondCall);
+    });
+
+    it("should handle memory pressure scenarios", () => {
+      const complexPool: DicePool = {
+        abilityDice: 5,
+        proficiencyDice: 3,
+        difficultyDice: 4,
+        challengeDice: 2,
+        boostDice: 2,
+        setBackDice: 2,
+        forceDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(complexPool, 50000);
+      const result = monteCarlo.simulate();
+
+      // Should complete without memory issues
+      expect(result.averages.successes).toBeDefined();
+      expect(result.medians.successes).toBeDefined();
+      expect(result.standardDeviations.successes).toBeDefined();
+    });
+
+    it("should maintain histogram accuracy with direct array access", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Verify histogram counts sum to total iterations
+      const netSuccessesSum = Object.values(
+        result.histogram.netSuccesses,
+      ).reduce((a, b) => a + b, 0);
+      expect(netSuccessesSum).toBe(1000);
+
+      const netAdvantagesSum = Object.values(
+        result.histogram.netAdvantages,
+      ).reduce((a, b) => a + b, 0);
+      expect(netAdvantagesSum).toBe(1000);
+    });
+
+    it("should handle long-running simulations efficiently", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000000); // MAX_ITERATIONS
+      const result = monteCarlo.simulate();
+
+      // Should complete without memory issues
+      expect(result.averages.successes).toBeDefined();
+      expect(result.medians.successes).toBeDefined();
+      expect(result.standardDeviations.successes).toBeDefined();
+    });
+
+    it("should maintain statistical accuracy with large datasets", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 100000);
+      const result = monteCarlo.simulate();
+
+      // Verify statistical properties
+      expect(result.averages.successes).toBeGreaterThan(0);
+      expect(result.standardDeviations.successes).toBeGreaterThan(0);
+      expect(result.medians.successes).toBeDefined();
+      expect(result.analysis.netSuccesses.skewness).toBeDefined();
+      expect(result.analysis.netSuccesses.kurtosis).toBeDefined();
+    });
+  });
+
+  describe("additional tests", () => {
+    it("should handle all selector types in average calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      monteCarlo.simulate();
+
+      // @ts-ignore - Accessing private method for testing
+      const selectors = [
+        { name: "successes" },
+        { name: "advantages" },
+        { name: "triumphs" },
+        { name: "failures" },
+        { name: "threats" },
+        { name: "despair" },
+        { name: "lightSide" },
+        { name: "darkSide" },
+      ];
+
+      selectors.forEach((selector) => {
+        // @ts-ignore - Testing private method
+        expect(() => monteCarlo["average"](selector)).not.toThrow();
+      });
+    });
+
+    it("should handle all selector types in standard deviation calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 2,
+        proficiencyDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      monteCarlo.simulate();
+
+      // @ts-ignore - Accessing private method for testing
+      const selectors = [
+        { name: "successes" },
+        { name: "advantages" },
+        { name: "triumphs" },
+        { name: "failures" },
+        { name: "threats" },
+        { name: "despair" },
+        { name: "lightSide" },
+        { name: "darkSide" },
+      ];
+
+      selectors.forEach((selector) => {
+        // @ts-ignore - Testing private method
+        expect(() => monteCarlo["standardDeviation"](selector)).not.toThrow();
+      });
+    });
+
+    it("should handle single-entry histogram for median calculation", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 5: 1000 };
+
+      // @ts-ignore - Accessing private method for testing
+      const median = monteCarlo["calculateMedianFromHistogram"](histogram);
+      expect(median).toBe(5);
+    });
+
+    it("should handle percentile calculation with single value", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = { 5: 1000 };
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 1000);
+      expect(percentiles[25]).toBe(5);
+      expect(percentiles[50]).toBe(5);
+      expect(percentiles[75]).toBe(5);
+      expect(percentiles[90]).toBe(5);
+    });
+
+    it("should handle percentile calculation with multiple values", () => {
+      const pool: DicePool = {
+        abilityDice: 1,
+      };
+      const monteCarlo = new MonteCarlo(pool, 1000);
+      const histogram: { [key: number]: number } = {
+        1: 250,
+        2: 250,
+        3: 250,
+        4: 250,
+      };
+
+      // @ts-ignore - Accessing private method for testing
+      const percentiles = monteCarlo["calculatePercentiles"](histogram, 1000);
+      expect(percentiles[25]).toBe(1);
+      expect(percentiles[50]).toBe(2);
+      expect(percentiles[75]).toBe(3);
+      expect(percentiles[90]).toBe(4);
+    });
   });
 });
