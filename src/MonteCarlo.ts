@@ -78,6 +78,11 @@ export class MonteCarlo {
     sumSquaredSuccesses: number;
     sumSquaredAdvantages: number;
     sumSquaredThreats: number;
+    sumSquaredFailures: number;
+    sumSquaredDespair: number;
+    sumSquaredLightSide: number;
+    sumSquaredDarkSide: number;
+    sumSquaredTriumphs: number;
   } = {
     successCount: 0,
     criticalSuccessCount: 0,
@@ -94,6 +99,11 @@ export class MonteCarlo {
     sumSquaredSuccesses: 0,
     sumSquaredAdvantages: 0,
     sumSquaredThreats: 0,
+    sumSquaredFailures: 0,
+    sumSquaredDespair: 0,
+    sumSquaredLightSide: 0,
+    sumSquaredDarkSide: 0,
+    sumSquaredTriumphs: 0,
   };
   private results: DiceResult[] = [];
 
@@ -359,24 +369,19 @@ export class MonteCarlo {
           squareSum = this.runningStats.sumSquaredThreats;
           break;
         case "triumphs":
-          squareSum =
-            this.runningStats.sumTriumphs * this.runningStats.sumTriumphs;
+          squareSum = this.runningStats.sumSquaredTriumphs;
           break;
         case "failures":
-          squareSum =
-            this.runningStats.sumFailures * this.runningStats.sumFailures;
+          squareSum = this.runningStats.sumSquaredFailures;
           break;
         case "despair":
-          squareSum =
-            this.runningStats.sumDespair * this.runningStats.sumDespair;
+          squareSum = this.runningStats.sumSquaredDespair;
           break;
         case "lightSide":
-          squareSum =
-            this.runningStats.sumLightSide * this.runningStats.sumLightSide;
+          squareSum = this.runningStats.sumSquaredLightSide;
           break;
         case "darkSide":
-          squareSum =
-            this.runningStats.sumDarkSide * this.runningStats.sumDarkSide;
+          squareSum = this.runningStats.sumSquaredDarkSide;
           break;
         default:
           throw new MonteCarloError(`Unknown selector: ${selector.name}`);
@@ -405,6 +410,11 @@ export class MonteCarlo {
       sumSquaredSuccesses: 0,
       sumSquaredAdvantages: 0,
       sumSquaredThreats: 0,
+      sumSquaredFailures: 0,
+      sumSquaredDespair: 0,
+      sumSquaredLightSide: 0,
+      sumSquaredDarkSide: 0,
+      sumSquaredTriumphs: 0,
     };
   }
 
@@ -443,6 +453,12 @@ export class MonteCarlo {
     this.runningStats.sumSquaredAdvantages +=
       result.advantages * result.advantages;
     this.runningStats.sumSquaredThreats += result.threats * result.threats;
+    this.runningStats.sumSquaredFailures += result.failures * result.failures;
+    this.runningStats.sumSquaredDespair += result.despair * result.despair;
+    this.runningStats.sumSquaredLightSide +=
+      result.lightSide * result.lightSide;
+    this.runningStats.sumSquaredDarkSide += result.darkSide * result.darkSide;
+    this.runningStats.sumSquaredTriumphs += result.triumphs * result.triumphs;
 
     if (netSuccesses > 0) {
       this.runningStats.successCount++;
@@ -501,11 +517,11 @@ export class MonteCarlo {
             averages.advantages * averages.advantages,
         ),
         triumphs: Math.sqrt(
-          this.runningStats.sumTriumphs / this.iterations -
+          this.runningStats.sumSquaredTriumphs / this.iterations -
             averages.triumphs * averages.triumphs,
         ),
         failures: Math.sqrt(
-          this.runningStats.sumFailures / this.iterations -
+          this.runningStats.sumSquaredFailures / this.iterations -
             averages.failures * averages.failures,
         ),
         threats: Math.sqrt(
@@ -513,15 +529,15 @@ export class MonteCarlo {
             averages.threats * averages.threats,
         ),
         despair: Math.sqrt(
-          this.runningStats.sumDespair / this.iterations -
+          this.runningStats.sumSquaredDespair / this.iterations -
             averages.despair * averages.despair,
         ),
         lightSide: Math.sqrt(
-          this.runningStats.sumLightSide / this.iterations -
+          this.runningStats.sumSquaredLightSide / this.iterations -
             averages.lightSide * averages.lightSide,
         ),
         darkSide: Math.sqrt(
-          this.runningStats.sumDarkSide / this.iterations -
+          this.runningStats.sumSquaredDarkSide / this.iterations -
             averages.darkSide * averages.darkSide,
         ),
       };
