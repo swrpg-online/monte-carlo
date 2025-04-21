@@ -212,6 +212,44 @@ When analyzing your dice pool using the Monte Carlo simulation, here's how to in
   - About 68% of rolls fall within ±1 standard deviation of the average
   - About 95% of rolls fall within ±2 standard deviations
 
+#### Histogram Data
+
+The `histogram` field provides a detailed frequency distribution for key outcomes:
+
+```typescript
+"histogram": {
+  "netSuccesses": { // Distribution of (Successes - Failures)
+    "0": 37445,     // 37445 rolls resulted in 0 net Successes
+    "1": 26516,     // 26516 rolls resulted in 1 net Success
+    "2": 8298,      //  8298 rolls resulted in 2 net Successes
+    "-1": 20853,    // 20853 rolls resulted in -1 net Success (1 net Failure)
+    "-2": 6888       //  6888 rolls resulted in -2 net Successes (2 net Failures)
+  },
+  "netAdvantages": { // Distribution of (Advantages - Threats)
+    "0": 39009,     // 39009 rolls resulted in 0 net Advantages
+    "1": 22149,     // 22149 rolls resulted in 1 net Advantage
+    "2": 8463,      //  8463 rolls resulted in 2 net Advantages
+    "-1": 22030,    // 22030 rolls resulted in -1 net Advantage (1 net Threat)
+    "-2": 8349       //  8349 rolls resulted in -2 net Advantages (2 net Threats)
+  },
+  "triumphs": {      // Distribution of Triumph counts
+    "0": 83570,     // 83570 rolls had 0 Triumphs
+    "1": 15430,     // 15430 rolls had 1 Triumph
+    "2": 1000       //  1000 rolls had 2 Triumphs
+  },
+  "despairs": {      // Distribution of Despair counts (similar structure) },
+  "lightSide": {     // Distribution of Light Side point counts (Force Dice) },
+  "darkSide": {      // Distribution of Dark Side point counts (Force Dice) }
+}
+```
+
+- **Keys**: Represent the specific outcome value (e.g., the net number of successes/advantages, or the count of triumphs/despairs).
+  - For `netSuccesses`, negative keys indicate **net Failures** (e.g., `-1` means 1 net Failure).
+  - For `netAdvantages`, negative keys indicate **net Threats** (e.g., `-2` means 2 net Threats).
+- **Values**: Represent the number of simulation iterations (rolls) that resulted in that specific outcome.
+
+This data allows for a detailed view of the likelihood of every possible outcome, going beyond the summary statistics. It's the basis for calculating the `analysis` metrics like skewness, kurtosis, and percentiles.
+
 #### Distribution Analysis
 
 - **skewness**: Measures distribution asymmetry:
