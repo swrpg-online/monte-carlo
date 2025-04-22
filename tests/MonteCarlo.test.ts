@@ -1390,4 +1390,103 @@ describe("MonteCarlo", () => {
       expect(percentiles[90]).toBe(4);
     });
   });
+
+  describe("result interface completeness", () => {
+    it("should include histogram property in MonteCarloResult", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Verify histogram exists
+      expect(result.histogram).toBeDefined();
+      expect(typeof result.histogram).toBe("object");
+
+      // Verify histogram has all expected properties
+      expect(result.histogram.netSuccesses).toBeDefined();
+      expect(result.histogram.netAdvantages).toBeDefined();
+      expect(result.histogram.triumphs).toBeDefined();
+      expect(result.histogram.despairs).toBeDefined();
+      expect(result.histogram.lightSide).toBeDefined();
+      expect(result.histogram.darkSide).toBeDefined();
+
+      // Verify histogram data structure
+      expect(Object.keys(result.histogram.netSuccesses).length).toBeGreaterThan(
+        0,
+      );
+
+      // Check property assignment works (TypeScript compilation would fail if property doesn't exist in interface)
+      const histogramCopy = result.histogram;
+      expect(histogramCopy).toEqual(result.histogram);
+    });
+
+    it("should include analysis property in MonteCarloResult", () => {
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Verify analysis exists
+      expect(result.analysis).toBeDefined();
+      expect(typeof result.analysis).toBe("object");
+
+      // Verify analysis has all expected properties
+      expect(result.analysis.netSuccesses).toBeDefined();
+      expect(result.analysis.netAdvantages).toBeDefined();
+      expect(result.analysis.triumphs).toBeDefined();
+      expect(result.analysis.despairs).toBeDefined();
+      expect(result.analysis.lightSide).toBeDefined();
+      expect(result.analysis.darkSide).toBeDefined();
+
+      // Verify analysis structure is complete
+      expect(result.analysis.netSuccesses.skewness).toBeDefined();
+      expect(result.analysis.netSuccesses.kurtosis).toBeDefined();
+      expect(result.analysis.netSuccesses.outliers).toBeDefined();
+      expect(result.analysis.netSuccesses.modes).toBeDefined();
+      expect(result.analysis.netSuccesses.percentiles).toBeDefined();
+
+      // Check property assignment works (TypeScript compilation would fail if property doesn't exist in interface)
+      const analysisCopy = result.analysis;
+      expect(analysisCopy).toEqual(result.analysis);
+    });
+
+    it("should export the complete interface through the package", () => {
+      // This is a compile-time check that verifies the exported interface includes all properties
+      // If the MonteCarloResult interface exported from the package is missing properties,
+      // TypeScript would throw compilation errors here
+
+      const monteCarlo = new MonteCarlo(dicePool, 1000);
+      const result = monteCarlo.simulate();
+
+      // Create a test function that requires the full interface
+      const testCompleteInterface = (
+        fullResult: import("../src").MonteCarloResult,
+      ) => {
+        // Access all expected properties to verify the interface is complete
+        const {
+          averages,
+          medians,
+          standardDeviations,
+          successProbability,
+          criticalSuccessProbability,
+          criticalFailureProbability,
+          netPositiveProbability,
+          histogram,
+          analysis,
+        } = fullResult;
+
+        // Access nested properties
+        const netSuccessesHist = histogram.netSuccesses;
+        const skewnessValue = analysis.netSuccesses.skewness;
+
+        return {
+          netSuccessesHist,
+          skewnessValue,
+        };
+      };
+
+      // Call the function with our result
+      const extracted = testCompleteInterface(result);
+
+      // Verify the function could extract the nested properties
+      expect(extracted.netSuccessesHist).toBeDefined();
+      expect(extracted.skewnessValue).toBeDefined();
+    });
+  });
 });
