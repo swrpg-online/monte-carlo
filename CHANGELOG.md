@@ -1,3 +1,9 @@
+## [2.0.3](https://github.com/swrpg-online/monte-carlo/compare/v2.0.2...v2.0.3) (2025-04-22)
+
+### Bug Fixes
+
+- correct build and release process to include histogram/analysis properties ([0bc3df1](https://github.com/swrpg-online/monte-carlo/commit/0bc3df178e92464fd3b660be4474c7d193f7d9f8))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
