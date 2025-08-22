@@ -1,3 +1,9 @@
+## [2.0.4](https://github.com/swrpg-online/monte-carlo/compare/v2.0.3...v2.0.4) (2025-08-22)
+
+### Bug Fixes
+
+- update version of dice library ([6fd40eb](https://github.com/swrpg-online/monte-carlo/commit/6fd40eb4dfb7987707157d0ec0fa3a0cb9c496dd))
+
 ## [2.0.3](https://github.com/swrpg-online/monte-carlo/compare/v2.0.2...v2.0.3) (2025-04-22)
 
 ### Bug Fixes
