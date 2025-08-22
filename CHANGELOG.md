@@ -1,3 +1,9 @@
+# [2.1.0](https://github.com/swrpg-online/monte-carlo/compare/v2.0.4...v2.1.0) (2025-08-22)
+
+### Features
+
+- **build:** add esbuild bundling and self-contained dist output ([cb951fb](https://github.com/swrpg-online/monte-carlo/commit/cb951fb03b0a5232654864dcf2f1ba7c600738e1))
+
 ## [2.0.4](https://github.com/swrpg-online/monte-carlo/compare/v2.0.3...v2.0.4) (2025-08-22)
 
 ### Bug Fixes
