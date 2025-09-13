@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/swrpg-online/monte-carlo/compare/v2.1.0...v2.2.0) (2025-09-13)
+
+### Features
+
+- **monte-carlo:** add support for dice pool modifiers and modifier analysis ([6eae536](https://github.com/swrpg-online/monte-carlo/commit/6eae536d662edfca870dcb83ff3c140602124fbc))
+- **montecarlo:** add support for modifiers and enhanced simulation scenarios ([9ca8b3b](https://github.com/swrpg-online/monte-carlo/commit/9ca8b3bebeafdf6ab4f02647f061ca6ede3147d4))
+
 # [2.1.0](https://github.com/swrpg-online/monte-carlo/compare/v2.0.4...v2.1.0) (2025-08-22)
 
 ### Features
