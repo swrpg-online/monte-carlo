@@ -293,105 +293,40 @@ describe("MonteCarlo with Modifiers", () => {
     });
   });
 
-  describe("Specialized simulation methods", () => {
-    it("should simulate Adversary talent", () => {
-      const monteCarlo = new MonteCarlo(baseDicePool, 10000);
-      const adversaryResult = monteCarlo.simulateAdversary(2);
+  describe("Comparison with and without modifiers", () => {
+    it("should show improvement with modifiers", () => {
+      // Base simulation without modifiers
+      const baseSim = new MonteCarlo(baseDicePool, 10000);
+      const baseResult = baseSim.simulate();
 
-      expect(adversaryResult.modifierAnalysis).toBeDefined();
-      expect(
-        adversaryResult.modifierAnalysis?.upgradeImpact.difficultyUpgrades,
-      ).toBe(2);
-      expect(adversaryResult.criticalFailureProbability).toBeGreaterThan(0);
-    });
-
-    it("should simulate aimed attacks", () => {
-      const monteCarlo = new MonteCarlo(baseDicePool, 10000);
-      const aimedResult = monteCarlo.simulateAimedAttack(1);
-
-      expect(aimedResult.modifierAnalysis).toBeDefined();
-      expect(aimedResult.modifierAnalysis?.upgradeImpact.abilityUpgrades).toBe(
-        1,
-      );
-    });
-
-    it("should simulate Superior weapons", () => {
-      const monteCarlo = new MonteCarlo(baseDicePool, 10000);
-      const superiorResult = monteCarlo.simulateSuperiorWeapon(1);
-
-      expect(superiorResult.modifierAnalysis).toBeDefined();
-      expect(
-        superiorResult.modifierAnalysis?.automaticSymbolContribution.advantages,
-      ).toBeCloseTo(1, 1);
-    });
-
-    it("should simulate complex combat scenarios", () => {
-      const monteCarlo = new MonteCarlo(baseDicePool, 10000);
-      const combatResult = monteCarlo.simulateCombatScenario(1, true, 2);
-
-      expect(combatResult.modifierAnalysis).toBeDefined();
-      expect(
-        combatResult.modifierAnalysis?.automaticSymbolContribution.successes,
-      ).toBeCloseTo(1, 1);
-      expect(
-        combatResult.modifierAnalysis?.automaticSymbolContribution.advantages,
-      ).toBeCloseTo(1, 1);
-      expect(
-        combatResult.modifierAnalysis?.upgradeImpact.difficultyUpgrades,
-      ).toBe(2);
-    });
-
-    it("should compare with and without modifiers", () => {
-      const monteCarlo = new MonteCarlo(baseDicePool, 10000);
-      const modifiers: ModifierConfig = {
-        automaticSuccesses: 1,
-        automaticAdvantages: 2,
-        upgradeAbility: 1,
+      // Simulation with modifiers
+      const modifiedConfig: SimulationConfig = {
+        dicePool: baseDicePool,
+        iterations: 10000,
+        modifiers: {
+          automaticSuccesses: 1,
+          automaticAdvantages: 2,
+          upgradeAbility: 1,
+        },
       };
 
-      const comparison = monteCarlo.compareWithAndWithoutModifiers(modifiers);
-
-      expect(comparison.base).toBeDefined();
-      expect(comparison.modified).toBeDefined();
-      expect(comparison.improvement).toBeDefined();
+      const modifiedSim = new MonteCarlo(modifiedConfig);
+      const modifiedResult = modifiedSim.simulate();
 
       // Modified should be better than base
-      expect(comparison.improvement.successProbabilityDelta).toBeGreaterThan(0);
-      // Allow tolerance for randomness
-      expect(comparison.improvement.averageSuccessesDelta).toBeGreaterThan(0.7);
-      expect(comparison.improvement.averageSuccessesDelta).toBeLessThan(1.3);
-      expect(comparison.improvement.averageAdvantagesDelta).toBeGreaterThan(
-        1.5,
+      expect(modifiedResult.successProbability).toBeGreaterThan(
+        baseResult.successProbability,
       );
-      expect(comparison.improvement.averageAdvantagesDelta).toBeLessThan(2.5);
-    });
+      // Allow tolerance for randomness in average improvements
+      const successImprovement =
+        modifiedResult.averages.successes - baseResult.averages.successes;
+      const advantageImprovement =
+        modifiedResult.averages.advantages - baseResult.averages.advantages;
 
-    it("should apply custom modifiers", () => {
-      const monteCarlo = new MonteCarlo(baseDicePool, 10000);
-      const customModifiers: ModifierConfig = {
-        automaticSuccesses: 2,
-        automaticFailures: 1,
-        automaticAdvantages: 3,
-        automaticThreats: 1,
-        automaticTriumphs: 1,
-        upgradeAbility: 2,
-        upgradeDifficulty: 1,
-      };
-
-      const result = monteCarlo.simulateWithModifiers(customModifiers);
-
-      expect(result.modifierAnalysis).toBeDefined();
-      expect(
-        result.modifierAnalysis?.automaticSymbolContribution.successes,
-      ).toBeCloseTo(2, 1);
-      expect(
-        result.modifierAnalysis?.automaticSymbolContribution.failures,
-      ).toBeCloseTo(1, 1);
-      expect(
-        result.modifierAnalysis?.automaticSymbolContribution.triumphs,
-      ).toBeCloseTo(1, 1);
-      expect(result.modifierAnalysis?.upgradeImpact.abilityUpgrades).toBe(2);
-      expect(result.modifierAnalysis?.upgradeImpact.difficultyUpgrades).toBe(1);
+      expect(successImprovement).toBeGreaterThan(0.7);
+      expect(successImprovement).toBeLessThan(1.3);
+      expect(advantageImprovement).toBeGreaterThan(1.5);
+      expect(advantageImprovement).toBeLessThan(2.5);
     });
   });
 

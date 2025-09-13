@@ -313,7 +313,10 @@ var _MonteCarlo = class _MonteCarlo {
       this.config = dicePoolOrConfig;
       this.dicePool = dicePoolOrConfig.dicePool;
       this.iterations = dicePoolOrConfig.iterations || iterations;
-      this.modifiers = dicePoolOrConfig.modifiers || this.mergeModifiers(dicePoolOrConfig.playerModifiers, dicePoolOrConfig.oppositionModifiers);
+      this.modifiers = dicePoolOrConfig.modifiers || this.mergeModifiers(
+        dicePoolOrConfig.playerModifiers,
+        dicePoolOrConfig.oppositionModifiers
+      );
     } else {
       this.dicePool = dicePoolOrConfig;
       this.iterations = iterations;
@@ -350,16 +353,26 @@ var _MonteCarlo = class _MonteCarlo {
   applyModifiers(pool) {
     if (!this.modifiers) return pool;
     const modifiedPool = { ...pool };
-    if (this.modifiers.automaticSuccesses) modifiedPool.automaticSuccesses = (modifiedPool.automaticSuccesses || 0) + this.modifiers.automaticSuccesses;
-    if (this.modifiers.automaticFailures) modifiedPool.automaticFailures = (modifiedPool.automaticFailures || 0) + this.modifiers.automaticFailures;
-    if (this.modifiers.automaticAdvantages) modifiedPool.automaticAdvantages = (modifiedPool.automaticAdvantages || 0) + this.modifiers.automaticAdvantages;
-    if (this.modifiers.automaticThreats) modifiedPool.automaticThreats = (modifiedPool.automaticThreats || 0) + this.modifiers.automaticThreats;
-    if (this.modifiers.automaticTriumphs) modifiedPool.automaticTriumphs = (modifiedPool.automaticTriumphs || 0) + this.modifiers.automaticTriumphs;
-    if (this.modifiers.automaticDespairs) modifiedPool.automaticDespairs = (modifiedPool.automaticDespairs || 0) + this.modifiers.automaticDespairs;
-    if (this.modifiers.upgradeAbility) modifiedPool.upgradeAbility = (modifiedPool.upgradeAbility || 0) + this.modifiers.upgradeAbility;
-    if (this.modifiers.upgradeDifficulty) modifiedPool.upgradeDifficulty = (modifiedPool.upgradeDifficulty || 0) + this.modifiers.upgradeDifficulty;
-    if (this.modifiers.downgradeProficiency) modifiedPool.downgradeProficiency = (modifiedPool.downgradeProficiency || 0) + this.modifiers.downgradeProficiency;
-    if (this.modifiers.downgradeChallenge) modifiedPool.downgradeChallenge = (modifiedPool.downgradeChallenge || 0) + this.modifiers.downgradeChallenge;
+    if (this.modifiers.automaticSuccesses)
+      modifiedPool.automaticSuccesses = (modifiedPool.automaticSuccesses || 0) + this.modifiers.automaticSuccesses;
+    if (this.modifiers.automaticFailures)
+      modifiedPool.automaticFailures = (modifiedPool.automaticFailures || 0) + this.modifiers.automaticFailures;
+    if (this.modifiers.automaticAdvantages)
+      modifiedPool.automaticAdvantages = (modifiedPool.automaticAdvantages || 0) + this.modifiers.automaticAdvantages;
+    if (this.modifiers.automaticThreats)
+      modifiedPool.automaticThreats = (modifiedPool.automaticThreats || 0) + this.modifiers.automaticThreats;
+    if (this.modifiers.automaticTriumphs)
+      modifiedPool.automaticTriumphs = (modifiedPool.automaticTriumphs || 0) + this.modifiers.automaticTriumphs;
+    if (this.modifiers.automaticDespairs)
+      modifiedPool.automaticDespairs = (modifiedPool.automaticDespairs || 0) + this.modifiers.automaticDespairs;
+    if (this.modifiers.upgradeAbility)
+      modifiedPool.upgradeAbility = (modifiedPool.upgradeAbility || 0) + this.modifiers.upgradeAbility;
+    if (this.modifiers.upgradeDifficulty)
+      modifiedPool.upgradeDifficulty = (modifiedPool.upgradeDifficulty || 0) + this.modifiers.upgradeDifficulty;
+    if (this.modifiers.downgradeProficiency)
+      modifiedPool.downgradeProficiency = (modifiedPool.downgradeProficiency || 0) + this.modifiers.downgradeProficiency;
+    if (this.modifiers.downgradeChallenge)
+      modifiedPool.downgradeChallenge = (modifiedPool.downgradeChallenge || 0) + this.modifiers.downgradeChallenge;
     this.modifierStats.upgradeImpact.abilityUpgrades = this.modifiers.upgradeAbility || 0;
     this.modifierStats.upgradeImpact.difficultyUpgrades = this.modifiers.upgradeDifficulty || 0;
     this.modifierStats.upgradeImpact.proficiencyDowngrades = this.modifiers.downgradeProficiency || 0;
@@ -631,12 +644,30 @@ var _MonteCarlo = class _MonteCarlo {
     this.modifierStats.automaticSymbolContribution.threats += autoThreats;
     this.modifierStats.automaticSymbolContribution.triumphs += autoTriumphs;
     this.modifierStats.automaticSymbolContribution.despairs += autoDespairs;
-    this.modifierStats.rolledSymbolContribution.successes += Math.max(0, result.successes - autoSuccesses);
-    this.modifierStats.rolledSymbolContribution.failures += Math.max(0, result.failures - autoFailures);
-    this.modifierStats.rolledSymbolContribution.advantages += Math.max(0, result.advantages - autoAdvantages);
-    this.modifierStats.rolledSymbolContribution.threats += Math.max(0, result.threats - autoThreats);
-    this.modifierStats.rolledSymbolContribution.triumphs += Math.max(0, result.triumphs - autoTriumphs);
-    this.modifierStats.rolledSymbolContribution.despairs += Math.max(0, result.despair - autoDespairs);
+    this.modifierStats.rolledSymbolContribution.successes += Math.max(
+      0,
+      result.successes - autoSuccesses
+    );
+    this.modifierStats.rolledSymbolContribution.failures += Math.max(
+      0,
+      result.failures - autoFailures
+    );
+    this.modifierStats.rolledSymbolContribution.advantages += Math.max(
+      0,
+      result.advantages - autoAdvantages
+    );
+    this.modifierStats.rolledSymbolContribution.threats += Math.max(
+      0,
+      result.threats - autoThreats
+    );
+    this.modifierStats.rolledSymbolContribution.triumphs += Math.max(
+      0,
+      result.triumphs - autoTriumphs
+    );
+    this.modifierStats.rolledSymbolContribution.despairs += Math.max(
+      0,
+      result.despair - autoDespairs
+    );
   }
   updateHistogram(result) {
     const netSuccesses = result.successes - result.failures;
@@ -863,114 +894,6 @@ var _MonteCarlo = class _MonteCarlo {
       currentTargetIndex++;
     }
     return percentiles;
-  }
-  // Specialized simulation methods for common RPG scenarios
-  /**
-   * Simulate a roll with Adversary talent applied
-   * @param adversaryRating The Adversary rating (typically 1-3)
-   * @returns MonteCarloResult with Adversary upgrades applied
-   */
-  simulateAdversary(adversaryRating) {
-    const config = {
-      dicePool: this.dicePool,
-      iterations: this.iterations,
-      oppositionModifiers: {
-        upgradeDifficulty: adversaryRating
-      }
-    };
-    const sim = new _MonteCarlo(config, this.iterations, false);
-    return sim.simulate();
-  }
-  /**
-   * Simulate an aimed attack with ability upgrades
-   * @param aimCount Number of Aim maneuvers taken (typically 1-2)
-   * @returns MonteCarloResult with Aim upgrades applied
-   */
-  simulateAimedAttack(aimCount) {
-    const config = {
-      dicePool: this.dicePool,
-      iterations: this.iterations,
-      playerModifiers: {
-        upgradeAbility: aimCount
-      }
-    };
-    const sim = new _MonteCarlo(config, this.iterations, false);
-    return sim.simulate();
-  }
-  /**
-   * Simulate a roll with Superior weapon quality
-   * @param superiorRating The Superior rating (typically 1)
-   * @returns MonteCarloResult with automatic advantages applied
-   */
-  simulateSuperiorWeapon(superiorRating = 1) {
-    const config = {
-      dicePool: this.dicePool,
-      iterations: this.iterations,
-      playerModifiers: {
-        automaticAdvantages: superiorRating
-      }
-    };
-    const sim = new _MonteCarlo(config, this.iterations, false);
-    return sim.simulate();
-  }
-  /**
-   * Simulate a roll with multiple talents/equipment modifiers
-   * @param modifiers Combined modifiers from talents and equipment
-   * @returns MonteCarloResult with all modifiers applied
-   */
-  simulateWithModifiers(modifiers) {
-    const config = {
-      dicePool: this.dicePool,
-      iterations: this.iterations,
-      modifiers
-    };
-    const sim = new _MonteCarlo(config, this.iterations, false);
-    return sim.simulate();
-  }
-  /**
-   * Compare results with and without modifiers
-   * @param modifiers Modifiers to test
-   * @returns Object containing base and modified results for comparison
-   */
-  compareWithAndWithoutModifiers(modifiers) {
-    const baseSim = new _MonteCarlo(this.dicePool, this.iterations, false);
-    const base = baseSim.simulate();
-    const modifiedSim = new _MonteCarlo({
-      dicePool: this.dicePool,
-      iterations: this.iterations,
-      modifiers
-    }, this.iterations, false);
-    const modified = modifiedSim.simulate();
-    const improvement = {
-      successProbabilityDelta: modified.successProbability - base.successProbability,
-      averageSuccessesDelta: modified.averages.successes - base.averages.successes,
-      averageAdvantagesDelta: modified.averages.advantages - base.averages.advantages,
-      criticalSuccessProbabilityDelta: modified.criticalSuccessProbability - base.criticalSuccessProbability
-    };
-    return { base, modified, improvement };
-  }
-  /**
-   * Simulate a Sharpshooter with Superior weapon vs Adversary
-   * Common scenario in Star Wars RPG
-   * @param sharpshooterRanks Ranks in Sharpshooter talent (typically 1-2)
-   * @param weaponSuperior Whether weapon has Superior quality
-   * @param adversaryRating Adversary rating of target (typically 0-3)
-   * @returns MonteCarloResult with all modifiers applied
-   */
-  simulateCombatScenario(sharpshooterRanks = 0, weaponSuperior = false, adversaryRating = 0) {
-    const config = {
-      dicePool: this.dicePool,
-      iterations: this.iterations,
-      playerModifiers: {
-        automaticSuccesses: sharpshooterRanks,
-        automaticAdvantages: weaponSuperior ? 1 : 0
-      },
-      oppositionModifiers: {
-        upgradeDifficulty: adversaryRating
-      }
-    };
-    const sim = new _MonteCarlo(config, this.iterations, false);
-    return sim.simulate();
   }
 };
 _MonteCarlo.MIN_ITERATIONS = 100;
