@@ -3,6 +3,52 @@ import { DiceResult } from "@swrpg-online/dice/dist/types";
 
 export { DicePool };
 
+export interface ModifierConfig {
+  automaticSuccesses?: number;
+  automaticFailures?: number;
+  automaticAdvantages?: number;
+  automaticThreats?: number;
+  automaticTriumphs?: number;
+  automaticDespairs?: number;
+  upgradeAbility?: number;
+  upgradeDifficulty?: number;
+  downgradeProficiency?: number;
+  downgradeChallenge?: number;
+}
+
+export interface SimulationConfig {
+  dicePool: DicePool;
+  iterations?: number;
+  modifiers?: ModifierConfig;
+  playerModifiers?: ModifierConfig;
+  oppositionModifiers?: ModifierConfig;
+}
+
+export interface ModifierAnalysis {
+  automaticSymbolContribution: {
+    successes: number;
+    failures: number;
+    advantages: number;
+    threats: number;
+    triumphs: number;
+    despairs: number;
+  };
+  rolledSymbolContribution: {
+    successes: number;
+    failures: number;
+    advantages: number;
+    threats: number;
+    triumphs: number;
+    despairs: number;
+  };
+  upgradeImpact: {
+    abilityUpgrades: number;
+    difficultyUpgrades: number;
+    proficiencyDowngrades: number;
+    challengeDowngrades: number;
+  };
+}
+
 export class MonteCarloError extends Error {
   constructor(message: string) {
     super(message);
@@ -46,11 +92,14 @@ export interface MonteCarloResult {
     lightSide: DistributionAnalysis;
     darkSide: DistributionAnalysis;
   };
+  modifierAnalysis?: ModifierAnalysis;
 }
 
 export class MonteCarlo {
   private readonly dicePool: DicePool;
   private readonly iterations: number;
+  private readonly modifiers?: ModifierConfig;
+  private readonly config?: SimulationConfig;
   private histogram: HistogramData = {
     netSuccesses: {},
     netAdvantages: {},
@@ -62,6 +111,30 @@ export class MonteCarlo {
   private static readonly MIN_ITERATIONS = 100;
   private static readonly MAX_ITERATIONS = 1000000;
   private statsCache: Map<string, number> = new Map();
+  private modifierStats: ModifierAnalysis = {
+    automaticSymbolContribution: {
+      successes: 0,
+      failures: 0,
+      advantages: 0,
+      threats: 0,
+      triumphs: 0,
+      despairs: 0,
+    },
+    rolledSymbolContribution: {
+      successes: 0,
+      failures: 0,
+      advantages: 0,
+      threats: 0,
+      triumphs: 0,
+      despairs: 0,
+    },
+    upgradeImpact: {
+      abilityUpgrades: 0,
+      difficultyUpgrades: 0,
+      proficiencyDowngrades: 0,
+      challengeDowngrades: 0,
+    },
+  };
   private runningStats: {
     successCount: number;
     criticalSuccessCount: number;
@@ -108,18 +181,122 @@ export class MonteCarlo {
   private results: DiceResult[] = [];
 
   constructor(
-    dicePool: DicePool,
+    dicePoolOrConfig: DicePool | SimulationConfig,
     iterations: number = 10000,
     runSimulate: boolean = true,
   ) {
-    this.validateDicePool(dicePool);
-    this.validateIterations(iterations);
-    this.dicePool = dicePool;
-    this.iterations = iterations;
+    if (this.isSimulationConfig(dicePoolOrConfig)) {
+      this.config = dicePoolOrConfig;
+      this.dicePool = dicePoolOrConfig.dicePool;
+      this.iterations = dicePoolOrConfig.iterations || iterations;
+      this.modifiers =
+        dicePoolOrConfig.modifiers ||
+        this.mergeModifiers(
+          dicePoolOrConfig.playerModifiers,
+          dicePoolOrConfig.oppositionModifiers,
+        );
+    } else {
+      this.dicePool = dicePoolOrConfig;
+      this.iterations = iterations;
+    }
+
+    this.validateDicePool(this.dicePool);
+    this.validateIterations(this.iterations);
     this.resetRunningStats();
     if (runSimulate) {
       this.simulate();
     }
+  }
+
+  private isSimulationConfig(obj: any): obj is SimulationConfig {
+    return obj && typeof obj === "object" && "dicePool" in obj;
+  }
+
+  private mergeModifiers(
+    player?: ModifierConfig,
+    opposition?: ModifierConfig,
+  ): ModifierConfig | undefined {
+    if (!player && !opposition) return undefined;
+
+    const merged: ModifierConfig = {};
+
+    if (player) {
+      merged.automaticSuccesses = player.automaticSuccesses;
+      merged.automaticAdvantages = player.automaticAdvantages;
+      merged.automaticTriumphs = player.automaticTriumphs;
+      merged.upgradeAbility = player.upgradeAbility;
+      merged.downgradeProficiency = player.downgradeProficiency;
+    }
+
+    if (opposition) {
+      merged.automaticFailures = opposition.automaticFailures;
+      merged.automaticThreats = opposition.automaticThreats;
+      merged.automaticDespairs = opposition.automaticDespairs;
+      merged.upgradeDifficulty = opposition.upgradeDifficulty;
+      merged.downgradeChallenge = opposition.downgradeChallenge;
+    }
+
+    return merged;
+  }
+
+  private applyModifiers(pool: DicePool): DicePool {
+    if (!this.modifiers) return pool;
+
+    const modifiedPool: DicePool = { ...pool };
+
+    // Apply automatic symbols
+    if (this.modifiers.automaticSuccesses)
+      modifiedPool.automaticSuccesses =
+        (modifiedPool.automaticSuccesses || 0) +
+        this.modifiers.automaticSuccesses;
+    if (this.modifiers.automaticFailures)
+      modifiedPool.automaticFailures =
+        (modifiedPool.automaticFailures || 0) +
+        this.modifiers.automaticFailures;
+    if (this.modifiers.automaticAdvantages)
+      modifiedPool.automaticAdvantages =
+        (modifiedPool.automaticAdvantages || 0) +
+        this.modifiers.automaticAdvantages;
+    if (this.modifiers.automaticThreats)
+      modifiedPool.automaticThreats =
+        (modifiedPool.automaticThreats || 0) + this.modifiers.automaticThreats;
+    if (this.modifiers.automaticTriumphs)
+      modifiedPool.automaticTriumphs =
+        (modifiedPool.automaticTriumphs || 0) +
+        this.modifiers.automaticTriumphs;
+    if (this.modifiers.automaticDespairs)
+      modifiedPool.automaticDespairs =
+        (modifiedPool.automaticDespairs || 0) +
+        this.modifiers.automaticDespairs;
+
+    // Apply upgrades/downgrades
+    if (this.modifiers.upgradeAbility)
+      modifiedPool.upgradeAbility =
+        (modifiedPool.upgradeAbility || 0) + this.modifiers.upgradeAbility;
+    if (this.modifiers.upgradeDifficulty)
+      modifiedPool.upgradeDifficulty =
+        (modifiedPool.upgradeDifficulty || 0) +
+        this.modifiers.upgradeDifficulty;
+    if (this.modifiers.downgradeProficiency)
+      modifiedPool.downgradeProficiency =
+        (modifiedPool.downgradeProficiency || 0) +
+        this.modifiers.downgradeProficiency;
+    if (this.modifiers.downgradeChallenge)
+      modifiedPool.downgradeChallenge =
+        (modifiedPool.downgradeChallenge || 0) +
+        this.modifiers.downgradeChallenge;
+
+    // Track upgrades for analysis
+    this.modifierStats.upgradeImpact.abilityUpgrades =
+      this.modifiers.upgradeAbility || 0;
+    this.modifierStats.upgradeImpact.difficultyUpgrades =
+      this.modifiers.upgradeDifficulty || 0;
+    this.modifierStats.upgradeImpact.proficiencyDowngrades =
+      this.modifiers.downgradeProficiency || 0;
+    this.modifierStats.upgradeImpact.challengeDowngrades =
+      this.modifiers.downgradeChallenge || 0;
+
+    return modifiedPool;
   }
 
   private validateDicePool(dicePool: DicePool): void {
@@ -418,6 +595,82 @@ export class MonteCarlo {
     };
   }
 
+  private resetModifierStats(): void {
+    this.modifierStats = {
+      automaticSymbolContribution: {
+        successes: 0,
+        failures: 0,
+        advantages: 0,
+        threats: 0,
+        triumphs: 0,
+        despairs: 0,
+      },
+      rolledSymbolContribution: {
+        successes: 0,
+        failures: 0,
+        advantages: 0,
+        threats: 0,
+        triumphs: 0,
+        despairs: 0,
+      },
+      upgradeImpact: {
+        abilityUpgrades: 0,
+        difficultyUpgrades: 0,
+        proficiencyDowngrades: 0,
+        challengeDowngrades: 0,
+      },
+    };
+  }
+
+  private trackModifierContribution(result: DiceResult): void {
+    if (!this.modifiers) return;
+
+    // Get the automatic symbols from the dice pool (these are already included in the result)
+    // The DicePool modifiers are applied by the dice library, so the result already includes them
+    const poolModifiers = this.applyModifiers(this.dicePool);
+    const autoSuccesses = poolModifiers.automaticSuccesses || 0;
+    const autoFailures = poolModifiers.automaticFailures || 0;
+    const autoAdvantages = poolModifiers.automaticAdvantages || 0;
+    const autoThreats = poolModifiers.automaticThreats || 0;
+    const autoTriumphs = poolModifiers.automaticTriumphs || 0;
+    const autoDespairs = poolModifiers.automaticDespairs || 0;
+
+    // Track automatic symbol contributions
+    this.modifierStats.automaticSymbolContribution.successes += autoSuccesses;
+    this.modifierStats.automaticSymbolContribution.failures += autoFailures;
+    this.modifierStats.automaticSymbolContribution.advantages += autoAdvantages;
+    this.modifierStats.automaticSymbolContribution.threats += autoThreats;
+    this.modifierStats.automaticSymbolContribution.triumphs += autoTriumphs;
+    this.modifierStats.automaticSymbolContribution.despairs += autoDespairs;
+
+    // Track rolled symbol contributions (total result minus automatic symbols)
+    // The result from roll() already includes automatic symbols, so we subtract them
+    this.modifierStats.rolledSymbolContribution.successes += Math.max(
+      0,
+      result.successes - autoSuccesses,
+    );
+    this.modifierStats.rolledSymbolContribution.failures += Math.max(
+      0,
+      result.failures - autoFailures,
+    );
+    this.modifierStats.rolledSymbolContribution.advantages += Math.max(
+      0,
+      result.advantages - autoAdvantages,
+    );
+    this.modifierStats.rolledSymbolContribution.threats += Math.max(
+      0,
+      result.threats - autoThreats,
+    );
+    this.modifierStats.rolledSymbolContribution.triumphs += Math.max(
+      0,
+      result.triumphs - autoTriumphs,
+    );
+    this.modifierStats.rolledSymbolContribution.despairs += Math.max(
+      0,
+      result.despair - autoDespairs,
+    );
+  }
+
   private updateHistogram(result: DiceResult): void {
     // Update net successes with direct array access
     const netSuccesses = result.successes - result.failures;
@@ -474,14 +727,19 @@ export class MonteCarlo {
     try {
       this.resetHistogram();
       this.resetRunningStats();
+      this.resetModifierStats();
       this.statsCache.clear();
       this.results = [];
 
+      // Apply modifiers to create the modified pool
+      const modifiedPool = this.applyModifiers(this.dicePool);
+
       // Run simulations and update histograms in a single pass
       for (let i = 0; i < this.iterations; i++) {
-        const rollResult = roll(this.dicePool);
+        const rollResult = roll(modifiedPool);
         this.results.push(rollResult.summary);
         this.updateHistogram(rollResult.summary);
+        this.trackModifierContribution(rollResult.summary);
       }
 
       // Calculate probabilities using running statistics
@@ -588,7 +846,7 @@ export class MonteCarlo {
         ),
       };
 
-      return {
+      const result: MonteCarloResult = {
         averages,
         medians,
         standardDeviations,
@@ -599,6 +857,53 @@ export class MonteCarlo {
         histogram: this.histogram,
         analysis,
       };
+
+      // Add modifier analysis if modifiers were used
+      if (this.modifiers) {
+        // Calculate average contributions
+        const iterations = this.iterations;
+        result.modifierAnalysis = {
+          automaticSymbolContribution: {
+            successes:
+              this.modifierStats.automaticSymbolContribution.successes /
+              iterations,
+            failures:
+              this.modifierStats.automaticSymbolContribution.failures /
+              iterations,
+            advantages:
+              this.modifierStats.automaticSymbolContribution.advantages /
+              iterations,
+            threats:
+              this.modifierStats.automaticSymbolContribution.threats /
+              iterations,
+            triumphs:
+              this.modifierStats.automaticSymbolContribution.triumphs /
+              iterations,
+            despairs:
+              this.modifierStats.automaticSymbolContribution.despairs /
+              iterations,
+          },
+          rolledSymbolContribution: {
+            successes:
+              this.modifierStats.rolledSymbolContribution.successes /
+              iterations,
+            failures:
+              this.modifierStats.rolledSymbolContribution.failures / iterations,
+            advantages:
+              this.modifierStats.rolledSymbolContribution.advantages /
+              iterations,
+            threats:
+              this.modifierStats.rolledSymbolContribution.threats / iterations,
+            triumphs:
+              this.modifierStats.rolledSymbolContribution.triumphs / iterations,
+            despairs:
+              this.modifierStats.rolledSymbolContribution.despairs / iterations,
+          },
+          upgradeImpact: this.modifierStats.upgradeImpact,
+        };
+      }
+
+      return result;
     } catch (error) {
       if (error instanceof Error) {
         throw new MonteCarloError(`Simulation failed: ${error.message}`);

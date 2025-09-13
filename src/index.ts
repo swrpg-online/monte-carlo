@@ -5,4 +5,7 @@ export type {
   MonteCarloResult,
   HistogramData,
   DistributionAnalysis,
+  ModifierConfig,
+  SimulationConfig,
+  ModifierAnalysis,
 } from "./MonteCarlo";
