@@ -234,6 +234,11 @@ export class MonteCarlo {
       merged.automaticSuccesses = player.automaticSuccesses;
       merged.automaticAdvantages = player.automaticAdvantages;
       merged.automaticTriumphs = player.automaticTriumphs;
+      // Triumph includes an implicit success in SWRPG, so add it to successes
+      if (player.automaticTriumphs) {
+        merged.automaticSuccesses =
+          (merged.automaticSuccesses || 0) + player.automaticTriumphs;
+      }
       merged.automaticLightSide = player.automaticLightSide;
       merged.upgradeAbility = player.upgradeAbility;
       merged.downgradeProficiency = player.downgradeProficiency;
@@ -277,10 +282,15 @@ export class MonteCarlo {
     if (this.modifiers.automaticThreats)
       modifiedPool.automaticThreats =
         (modifiedPool.automaticThreats || 0) + this.modifiers.automaticThreats;
-    if (this.modifiers.automaticTriumphs)
+    if (this.modifiers.automaticTriumphs) {
       modifiedPool.automaticTriumphs =
         (modifiedPool.automaticTriumphs || 0) +
         this.modifiers.automaticTriumphs;
+      // Triumph includes an implicit success in SWRPG
+      modifiedPool.automaticSuccesses =
+        (modifiedPool.automaticSuccesses || 0) +
+        this.modifiers.automaticTriumphs;
+    }
     if (this.modifiers.automaticDespairs) {
       modifiedPool.automaticDespairs =
         (modifiedPool.automaticDespairs || 0) +
