@@ -5,8 +5,8 @@ var a = { 1: {}, 2: {}, 3: { successes: 1 }, 4: { successes: 1, advantages: 1 },
 var s = { 1: {}, 2: {}, 3: { failures: 1 }, 4: { failures: 1 }, 5: { threats: 1 }, 6: { threats: 1 } };
 var i = { 1: {}, 2: { successes: 1 }, 3: { successes: 1 }, 4: { successes: 2 }, 5: { advantages: 1 }, 6: { advantages: 1 }, 7: { successes: 1, advantages: 1 }, 8: { advantages: 2 } };
 var r = { 1: {}, 2: { failures: 1 }, 3: { failures: 2 }, 4: { threats: 1 }, 5: { threats: 1 }, 6: { threats: 1 }, 7: { threats: 2 }, 8: { failures: 1, threats: 1 } };
-var c = { 1: {}, 2: { successes: 1 }, 3: { successes: 1 }, 4: { successes: 2 }, 5: { successes: 2 }, 6: { advantages: 1 }, 7: { successes: 1, advantages: 1 }, 8: { successes: 1, advantages: 1 }, 9: { successes: 1, advantages: 1 }, 10: { advantages: 2 }, 11: { advantages: 2 }, 12: { triumphs: 1 } };
-var n = { 1: {}, 2: { failures: 1 }, 3: { failures: 1 }, 4: { failures: 2 }, 5: { failures: 2 }, 6: { threats: 1 }, 7: { threats: 1 }, 8: { failures: 1, threats: 1 }, 9: { failures: 1, threats: 1 }, 10: { threats: 2 }, 11: { threats: 2 }, 12: { despairs: 1 } };
+var c = { 1: {}, 2: { successes: 1 }, 3: { successes: 1 }, 4: { successes: 2 }, 5: { successes: 2 }, 6: { advantages: 1 }, 7: { successes: 1, advantages: 1 }, 8: { successes: 1, advantages: 1 }, 9: { successes: 1, advantages: 1 }, 10: { advantages: 2 }, 11: { advantages: 2 }, 12: { triumphs: 1, successes: 1 } };
+var n = { 1: {}, 2: { failures: 1 }, 3: { failures: 1 }, 4: { failures: 2 }, 5: { failures: 2 }, 6: { threats: 1 }, 7: { threats: 1 }, 8: { failures: 1, threats: 1 }, 9: { failures: 1, threats: 1 }, 10: { threats: 2 }, 11: { threats: 2 }, 12: { despairs: 1, failures: 1 } };
 var o = { 1: { darkSide: 1 }, 2: { darkSide: 1 }, 3: { darkSide: 1 }, 4: { darkSide: 1 }, 5: { darkSide: 1 }, 6: { darkSide: 1 }, 7: { darkSide: 2 }, 8: { lightSide: 1 }, 9: { lightSide: 1 }, 10: { lightSide: 2 }, 11: { lightSide: 2 }, 12: { lightSide: 2 } };
 var l = (e2) => Math.floor(Math.random() * e2) + 1;
 var u = (e2) => {
