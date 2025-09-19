@@ -243,6 +243,11 @@ export class MonteCarlo {
       merged.automaticFailures = opposition.automaticFailures;
       merged.automaticThreats = opposition.automaticThreats;
       merged.automaticDespairs = opposition.automaticDespairs;
+      // Despair includes an implicit failure in SWRPG, so add it to failures
+      if (opposition.automaticDespairs) {
+        merged.automaticFailures =
+          (merged.automaticFailures || 0) + opposition.automaticDespairs;
+      }
       merged.automaticDarkSide = opposition.automaticDarkSide;
       merged.upgradeDifficulty = opposition.upgradeDifficulty;
       merged.downgradeChallenge = opposition.downgradeChallenge;
@@ -276,10 +281,15 @@ export class MonteCarlo {
       modifiedPool.automaticTriumphs =
         (modifiedPool.automaticTriumphs || 0) +
         this.modifiers.automaticTriumphs;
-    if (this.modifiers.automaticDespairs)
+    if (this.modifiers.automaticDespairs) {
       modifiedPool.automaticDespairs =
         (modifiedPool.automaticDespairs || 0) +
         this.modifiers.automaticDespairs;
+      // Despair includes an implicit failure in SWRPG
+      modifiedPool.automaticFailures =
+        (modifiedPool.automaticFailures || 0) +
+        this.modifiers.automaticDespairs;
+    }
     if (this.modifiers.automaticLightSide)
       modifiedPool.automaticLightSide =
         (modifiedPool.automaticLightSide || 0) +
