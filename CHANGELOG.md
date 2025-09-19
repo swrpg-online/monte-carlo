@@ -1,3 +1,9 @@
+## [2.3.2](https://github.com/swrpg-online/monte-carlo/compare/v2.3.1...v2.3.2) (2025-09-19)
+
+### Bug Fixes
+
+- **dice:** correct summation of successes and failures in roll results ([620caee](https://github.com/swrpg-online/monte-carlo/commit/620caee97d385981bc602bed93ca1942fc63b61b))
+
 ## [2.3.1](https://github.com/swrpg-online/monte-carlo/compare/v2.3.0...v2.3.1) (2025-09-19)
 
 ### Bug Fixes
