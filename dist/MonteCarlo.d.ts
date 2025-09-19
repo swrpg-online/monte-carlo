@@ -8,6 +8,8 @@ export interface ModifierConfig {
     automaticThreats?: number;
     automaticTriumphs?: number;
     automaticDespairs?: number;
+    automaticLightSide?: number;
+    automaticDarkSide?: number;
     upgradeAbility?: number;
     upgradeDifficulty?: number;
     downgradeProficiency?: number;
@@ -28,6 +30,8 @@ export interface ModifierAnalysis {
         threats: number;
         triumphs: number;
         despairs: number;
+        lightSide: number;
+        darkSide: number;
     };
     rolledSymbolContribution: {
         successes: number;
@@ -36,6 +40,8 @@ export interface ModifierAnalysis {
         threats: number;
         triumphs: number;
         despairs: number;
+        lightSide: number;
+        darkSide: number;
     };
     upgradeImpact: {
         abilityUpgrades: number;

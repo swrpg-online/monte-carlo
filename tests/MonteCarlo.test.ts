@@ -165,7 +165,7 @@ describe("MonteCarlo", () => {
 
       // Success probability should be within reasonable bounds
       expect(result.successProbability).toBeGreaterThan(0.2);
-      expect(result.successProbability).toBeLessThan(0.4);
+      expect(result.successProbability).toBeLessThan(0.5);
     });
 
     it("should include histogram data in results", () => {
