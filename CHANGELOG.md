@@ -1,3 +1,9 @@
+## [2.3.1](https://github.com/swrpg-online/monte-carlo/compare/v2.3.0...v2.3.1) (2025-09-19)
+
+### Bug Fixes
+
+- **diceFaces:** add success to proficiency die's triumph face ([08c10b0](https://github.com/swrpg-online/monte-carlo/commit/08c10b0d633b95b9155a1921d629fe5aea7d4813))
+
 # [2.3.0](https://github.com/swrpg-online/monte-carlo/compare/v2.2.0...v2.3.0) (2025-09-19)
 
 ### Features
