@@ -10,6 +10,8 @@ export interface ModifierConfig {
   automaticThreats?: number;
   automaticTriumphs?: number;
   automaticDespairs?: number;
+  automaticLightSide?: number;
+  automaticDarkSide?: number;
   upgradeAbility?: number;
   upgradeDifficulty?: number;
   downgradeProficiency?: number;
@@ -32,6 +34,8 @@ export interface ModifierAnalysis {
     threats: number;
     triumphs: number;
     despairs: number;
+    lightSide: number;
+    darkSide: number;
   };
   rolledSymbolContribution: {
     successes: number;
@@ -40,6 +44,8 @@ export interface ModifierAnalysis {
     threats: number;
     triumphs: number;
     despairs: number;
+    lightSide: number;
+    darkSide: number;
   };
   upgradeImpact: {
     abilityUpgrades: number;
@@ -119,6 +125,8 @@ export class MonteCarlo {
       threats: 0,
       triumphs: 0,
       despairs: 0,
+      lightSide: 0,
+      darkSide: 0,
     },
     rolledSymbolContribution: {
       successes: 0,
@@ -127,6 +135,8 @@ export class MonteCarlo {
       threats: 0,
       triumphs: 0,
       despairs: 0,
+      lightSide: 0,
+      darkSide: 0,
     },
     upgradeImpact: {
       abilityUpgrades: 0,
@@ -224,6 +234,7 @@ export class MonteCarlo {
       merged.automaticSuccesses = player.automaticSuccesses;
       merged.automaticAdvantages = player.automaticAdvantages;
       merged.automaticTriumphs = player.automaticTriumphs;
+      merged.automaticLightSide = player.automaticLightSide;
       merged.upgradeAbility = player.upgradeAbility;
       merged.downgradeProficiency = player.downgradeProficiency;
     }
@@ -232,6 +243,7 @@ export class MonteCarlo {
       merged.automaticFailures = opposition.automaticFailures;
       merged.automaticThreats = opposition.automaticThreats;
       merged.automaticDespairs = opposition.automaticDespairs;
+      merged.automaticDarkSide = opposition.automaticDarkSide;
       merged.upgradeDifficulty = opposition.upgradeDifficulty;
       merged.downgradeChallenge = opposition.downgradeChallenge;
     }
@@ -268,6 +280,14 @@ export class MonteCarlo {
       modifiedPool.automaticDespairs =
         (modifiedPool.automaticDespairs || 0) +
         this.modifiers.automaticDespairs;
+    if (this.modifiers.automaticLightSide)
+      modifiedPool.automaticLightSide =
+        (modifiedPool.automaticLightSide || 0) +
+        this.modifiers.automaticLightSide;
+    if (this.modifiers.automaticDarkSide)
+      modifiedPool.automaticDarkSide =
+        (modifiedPool.automaticDarkSide || 0) +
+        this.modifiers.automaticDarkSide;
 
     // Apply upgrades/downgrades
     if (this.modifiers.upgradeAbility)
@@ -604,6 +624,8 @@ export class MonteCarlo {
         threats: 0,
         triumphs: 0,
         despairs: 0,
+        lightSide: 0,
+        darkSide: 0,
       },
       rolledSymbolContribution: {
         successes: 0,
@@ -612,6 +634,8 @@ export class MonteCarlo {
         threats: 0,
         triumphs: 0,
         despairs: 0,
+        lightSide: 0,
+        darkSide: 0,
       },
       upgradeImpact: {
         abilityUpgrades: 0,
@@ -634,6 +658,8 @@ export class MonteCarlo {
     const autoThreats = poolModifiers.automaticThreats || 0;
     const autoTriumphs = poolModifiers.automaticTriumphs || 0;
     const autoDespairs = poolModifiers.automaticDespairs || 0;
+    const autoLightSide = poolModifiers.automaticLightSide || 0;
+    const autoDarkSide = poolModifiers.automaticDarkSide || 0;
 
     // Track automatic symbol contributions
     this.modifierStats.automaticSymbolContribution.successes += autoSuccesses;
@@ -642,6 +668,8 @@ export class MonteCarlo {
     this.modifierStats.automaticSymbolContribution.threats += autoThreats;
     this.modifierStats.automaticSymbolContribution.triumphs += autoTriumphs;
     this.modifierStats.automaticSymbolContribution.despairs += autoDespairs;
+    this.modifierStats.automaticSymbolContribution.lightSide += autoLightSide;
+    this.modifierStats.automaticSymbolContribution.darkSide += autoDarkSide;
 
     // Track rolled symbol contributions (total result minus automatic symbols)
     // The result from roll() already includes automatic symbols, so we subtract them
@@ -668,6 +696,14 @@ export class MonteCarlo {
     this.modifierStats.rolledSymbolContribution.despairs += Math.max(
       0,
       result.despair - autoDespairs,
+    );
+    this.modifierStats.rolledSymbolContribution.lightSide += Math.max(
+      0,
+      result.lightSide - autoLightSide,
+    );
+    this.modifierStats.rolledSymbolContribution.darkSide += Math.max(
+      0,
+      result.darkSide - autoDarkSide,
     );
   }
 
@@ -882,6 +918,12 @@ export class MonteCarlo {
             despairs:
               this.modifierStats.automaticSymbolContribution.despairs /
               iterations,
+            lightSide:
+              this.modifierStats.automaticSymbolContribution.lightSide /
+              iterations,
+            darkSide:
+              this.modifierStats.automaticSymbolContribution.darkSide /
+              iterations,
           },
           rolledSymbolContribution: {
             successes:
@@ -898,6 +940,11 @@ export class MonteCarlo {
               this.modifierStats.rolledSymbolContribution.triumphs / iterations,
             despairs:
               this.modifierStats.rolledSymbolContribution.despairs / iterations,
+            lightSide:
+              this.modifierStats.rolledSymbolContribution.lightSide /
+              iterations,
+            darkSide:
+              this.modifierStats.rolledSymbolContribution.darkSide / iterations,
           },
           upgradeImpact: this.modifierStats.upgradeImpact,
         };
