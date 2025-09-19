@@ -1,3 +1,9 @@
+# [2.3.0](https://github.com/swrpg-online/monte-carlo/compare/v2.2.0...v2.3.0) (2025-09-19)
+
+### Features
+
+- **montecarlo:** add lightSide and darkSide symbols to MonteCarlo simulation ([db32f2e](https://github.com/swrpg-online/monte-carlo/commit/db32f2e82e011ff9542c3b852ffcbea1019181ea))
+
 # [2.2.0](https://github.com/swrpg-online/monte-carlo/compare/v2.1.0...v2.2.0) (2025-09-13)
 
 ### Features
