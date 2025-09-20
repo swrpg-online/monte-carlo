@@ -1,3 +1,10 @@
+## [2.3.3](https://github.com/swrpg-online/monte-carlo/compare/v2.3.2...v2.3.3) (2025-09-20)
+
+### Bug Fixes
+
+- **deps:** update @swrpg-online/dice to 2.1.1 ([f7e7bd0](https://github.com/swrpg-online/monte-carlo/commit/f7e7bd0b7be76557e89999a4aa4cde3bbb5d680c))
+- **dice:** correctly count triumphs and despairs in roll summary ([333bca1](https://github.com/swrpg-online/monte-carlo/commit/333bca13f13133e5c1b52d277212fb9117593aad))
+
 ## [2.3.2](https://github.com/swrpg-online/monte-carlo/compare/v2.3.1...v2.3.2) (2025-09-19)
 
 ### Bug Fixes
