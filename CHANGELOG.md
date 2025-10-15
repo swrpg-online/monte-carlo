@@ -1,3 +1,9 @@
+## [2.3.4](https://github.com/swrpg-online/monte-carlo/compare/v2.3.3...v2.3.4) (2025-10-15)
+
+### Bug Fixes
+
+- **deps:** upgrade @swrpg-online/dice to 3.0.0 and semantic-release to 24.2.9 ([4e5b993](https://github.com/swrpg-online/monte-carlo/commit/4e5b99330e35c2cb34ccc4b19ebb07843b21fbff))
+
 ## [2.3.3](https://github.com/swrpg-online/monte-carlo/compare/v2.3.2...v2.3.3) (2025-09-20)
 
 ### Bug Fixes
