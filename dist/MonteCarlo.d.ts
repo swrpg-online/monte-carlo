@@ -66,6 +66,12 @@ export interface HistogramData {
     despairs: {
         [key: number]: number;
     };
+    failures: {
+        [key: number]: number;
+    };
+    threats: {
+        [key: number]: number;
+    };
     lightSide: {
         [key: number]: number;
     };

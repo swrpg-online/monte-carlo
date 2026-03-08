@@ -133,6 +133,8 @@ var _MonteCarlo = class _MonteCarlo {
       netAdvantages: {},
       triumphs: {},
       despairs: {},
+      failures: {},
+      threats: {},
       lightSide: {},
       darkSide: {}
     };
@@ -579,6 +581,8 @@ var _MonteCarlo = class _MonteCarlo {
     this.histogram.despairs[result.despair] = (this.histogram.despairs[result.despair] || 0) + 1;
     this.histogram.lightSide[result.lightSide] = (this.histogram.lightSide[result.lightSide] || 0) + 1;
     this.histogram.darkSide[result.darkSide] = (this.histogram.darkSide[result.darkSide] || 0) + 1;
+    this.histogram.failures[result.failures] = (this.histogram.failures[result.failures] || 0) + 1;
+    this.histogram.threats[result.threats] = (this.histogram.threats[result.threats] || 0) + 1;
     this.runningStats.sumSuccesses += result.successes;
     this.runningStats.sumAdvantages += result.advantages;
     this.runningStats.sumTriumphs += result.triumphs;
@@ -634,28 +638,52 @@ var _MonteCarlo = class _MonteCarlo {
       };
       const standardDeviations = {
         successes: Math.sqrt(
-          this.runningStats.sumSquaredSuccesses / this.iterations - averages.successes * averages.successes
+          Math.max(
+            0,
+            this.runningStats.sumSquaredSuccesses / this.iterations - averages.successes * averages.successes
+          )
         ),
         advantages: Math.sqrt(
-          this.runningStats.sumSquaredAdvantages / this.iterations - averages.advantages * averages.advantages
+          Math.max(
+            0,
+            this.runningStats.sumSquaredAdvantages / this.iterations - averages.advantages * averages.advantages
+          )
         ),
         triumphs: Math.sqrt(
-          this.runningStats.sumSquaredTriumphs / this.iterations - averages.triumphs * averages.triumphs
+          Math.max(
+            0,
+            this.runningStats.sumSquaredTriumphs / this.iterations - averages.triumphs * averages.triumphs
+          )
         ),
         failures: Math.sqrt(
-          this.runningStats.sumSquaredFailures / this.iterations - averages.failures * averages.failures
+          Math.max(
+            0,
+            this.runningStats.sumSquaredFailures / this.iterations - averages.failures * averages.failures
+          )
         ),
         threats: Math.sqrt(
-          this.runningStats.sumSquaredThreats / this.iterations - averages.threats * averages.threats
+          Math.max(
+            0,
+            this.runningStats.sumSquaredThreats / this.iterations - averages.threats * averages.threats
+          )
         ),
         despair: Math.sqrt(
-          this.runningStats.sumSquaredDespair / this.iterations - averages.despair * averages.despair
+          Math.max(
+            0,
+            this.runningStats.sumSquaredDespair / this.iterations - averages.despair * averages.despair
+          )
         ),
         lightSide: Math.sqrt(
-          this.runningStats.sumSquaredLightSide / this.iterations - averages.lightSide * averages.lightSide
+          Math.max(
+            0,
+            this.runningStats.sumSquaredLightSide / this.iterations - averages.lightSide * averages.lightSide
+          )
         ),
         darkSide: Math.sqrt(
-          this.runningStats.sumSquaredDarkSide / this.iterations - averages.darkSide * averages.darkSide
+          Math.max(
+            0,
+            this.runningStats.sumSquaredDarkSide / this.iterations - averages.darkSide * averages.darkSide
+          )
         )
       };
       const medians = {
@@ -666,10 +694,8 @@ var _MonteCarlo = class _MonteCarlo {
           this.histogram.netAdvantages
         ),
         triumphs: this.calculateMedianFromHistogram(this.histogram.triumphs),
-        failures: this.calculateMedianFromHistogram(this.histogram.despairs),
-        threats: this.calculateMedianFromHistogram(
-          this.histogram.netAdvantages
-        ),
+        failures: this.calculateMedianFromHistogram(this.histogram.failures),
+        threats: this.calculateMedianFromHistogram(this.histogram.threats),
         despair: this.calculateMedianFromHistogram(this.histogram.despairs),
         lightSide: this.calculateMedianFromHistogram(this.histogram.lightSide),
         darkSide: this.calculateMedianFromHistogram(this.histogram.darkSide)
@@ -751,6 +777,8 @@ var _MonteCarlo = class _MonteCarlo {
       netAdvantages: {},
       triumphs: {},
       despairs: {},
+      failures: {},
+      threats: {},
       lightSide: {},
       darkSide: {}
     };
