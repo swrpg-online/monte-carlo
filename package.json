@@ -50,7 +50,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@swrpg-online/dice": "^3.0.0"
+    "@swrpg-online/dice": "^3.0.1"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
@@ -72,5 +72,5 @@
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
   },
-  "version": "2.3.5"
+  "version": "2.3.6"
 }
