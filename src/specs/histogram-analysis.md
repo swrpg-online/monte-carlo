@@ -34,6 +34,9 @@ interface HistogramData {
   darkSide: {
     [key: number]: number; // key: number of dark side, value: count
   };
+  netForce: {
+    [key: number]: number; // key: net force (light side - dark side), value: count
+  };
 }
 
 interface DistributionAnalysis {
@@ -49,6 +52,12 @@ interface DistributionAnalysis {
 
 interface MonteCarloResult {
   // ... existing fields ...
+  forceStatistics: {
+    averageNetForce: number; // "Avg Net Force Pips" (lightSide - darkSide)
+    medianNetForce: number;
+    standardDeviationNetForce: number;
+    maxForcePipsProbability: number; // "Max Force Pips %": P(every Force die shows a 2-pip face)
+  };
   histogram: HistogramData;
   analysis: {
     netSuccesses: DistributionAnalysis;
@@ -57,6 +66,7 @@ interface MonteCarloResult {
     despairs: DistributionAnalysis;
     lightSide: DistributionAnalysis;
     darkSide: DistributionAnalysis;
+    netForce: DistributionAnalysis;
   };
 }
 ```

@@ -32,40 +32,41 @@ var a = { 1: {}, 2: {}, 3: { successes: 1 }, 4: { successes: 1, advantages: 1 },
 var s = { 1: {}, 2: {}, 3: { failures: 1 }, 4: { failures: 1 }, 5: { threats: 1 }, 6: { threats: 1 } };
 var i = { 1: {}, 2: { successes: 1 }, 3: { successes: 1 }, 4: { successes: 2 }, 5: { advantages: 1 }, 6: { advantages: 1 }, 7: { successes: 1, advantages: 1 }, 8: { advantages: 2 } };
 var r = { 1: {}, 2: { failures: 1 }, 3: { failures: 2 }, 4: { threats: 1 }, 5: { threats: 1 }, 6: { threats: 1 }, 7: { threats: 2 }, 8: { failures: 1, threats: 1 } };
-var c = { 1: {}, 2: { successes: 1 }, 3: { successes: 1 }, 4: { successes: 2 }, 5: { successes: 2 }, 6: { advantages: 1 }, 7: { successes: 1, advantages: 1 }, 8: { successes: 1, advantages: 1 }, 9: { successes: 1, advantages: 1 }, 10: { advantages: 2 }, 11: { successes: 1, advantages: 1 }, 12: { triumphs: 1 } };
+var c = { 1: {}, 2: { successes: 1 }, 3: { successes: 1 }, 4: { successes: 2 }, 5: { successes: 2 }, 6: { advantages: 1 }, 7: { successes: 1, advantages: 1 }, 8: { successes: 1, advantages: 1 }, 9: { successes: 1, advantages: 1 }, 10: { advantages: 2 }, 11: { advantages: 2 }, 12: { triumphs: 1 } };
 var n = { 1: {}, 2: { failures: 1 }, 3: { failures: 1 }, 4: { failures: 2 }, 5: { failures: 2 }, 6: { threats: 1 }, 7: { threats: 1 }, 8: { failures: 1, threats: 1 }, 9: { failures: 1, threats: 1 }, 10: { threats: 2 }, 11: { threats: 2 }, 12: { despairs: 1 } };
 var o = { 1: { darkSide: 1 }, 2: { darkSide: 1 }, 3: { darkSide: 1 }, 4: { darkSide: 1 }, 5: { darkSide: 1 }, 6: { darkSide: 1 }, 7: { darkSide: 2 }, 8: { lightSide: 1 }, 9: { lightSide: 1 }, 10: { lightSide: 2 }, 11: { lightSide: 2 }, 12: { lightSide: 2 } };
-var l = (e2) => Math.floor(Math.random() * e2) + 1;
-var u = (e2) => {
+var l = { [e.SUCCESS]: "successes", [e.FAILURE]: "failures", [e.ADVANTAGE]: "advantages", [e.THREAT]: "threats", [e.TRIUMPH]: "triumphs", [e.DESPAIR]: "despair", [e.LIGHT]: "lightSide", [e.DARK]: "darkSide" };
+var u = (e2) => Math.floor(Math.random() * e2) + 1;
+var h = (e2) => {
   const t2 = a[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
-var h = (e2) => {
+var p = (e2) => {
   const t2 = s[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
-var p = (e2) => {
+var g = (e2) => {
   const t2 = i[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
-var g = (e2) => {
+var f = (e2) => {
   const t2 = r[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
-var f = (e2) => {
+var m = (e2) => {
   const t2 = c[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
-var m = (e2) => {
+var v = (e2) => {
   const t2 = n[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
-var v = (e2) => {
+var A = (e2) => {
   const t2 = o[e2];
   return { successes: t2.successes || 0, failures: t2.failures || 0, advantages: t2.advantages || 0, threats: t2.threats || 0, triumphs: t2.triumphs || 0, despair: t2.despairs || 0, lightSide: t2.lightSide || 0, darkSide: t2.darkSide || 0 };
 };
 var y = (e2, a2) => {
-  var s2, i2, r2, c2, n2, o2, d, y2, A;
+  var s2, i2, r2, c2, n2, o2, d, y2, S;
   const D = ((e3) => {
     const t2 = { ...e3 };
     if (e3.upgradeAbility && e3.upgradeAbility > 0) {
@@ -87,63 +88,65 @@ var y = (e2, a2) => {
       t2.challengeDice = a3 - s3, t2.difficultyDice = (t2.difficultyDice || 0) + s3;
     }
     return t2;
-  })(e2), S = null !== (s2 = D.boostDice) && void 0 !== s2 ? s2 : 0, T = null !== (i2 = D.abilityDice) && void 0 !== i2 ? i2 : 0, b = null !== (r2 = D.proficiencyDice) && void 0 !== r2 ? r2 : 0, k = null !== (c2 = D.setBackDice) && void 0 !== c2 ? c2 : 0, M = null !== (n2 = D.difficultyDice) && void 0 !== n2 ? n2 : 0, R = null !== (o2 = D.challengeDice) && void 0 !== o2 ? o2 : 0, E = null !== (d = D.forceDice) && void 0 !== d ? d : 0, P = null !== (y2 = null == a2 ? void 0 : a2.maxDicePerType) && void 0 !== y2 ? y2 : 100, I = null !== (A = null == a2 ? void 0 : a2.maxTotalDice) && void 0 !== A ? A : 500, x = Math.max(0, Math.min(S, P)), w = Math.max(0, Math.min(T, P)), H = Math.max(0, Math.min(b, P)), U = Math.max(0, Math.min(k, P)), G = Math.max(0, Math.min(M, P)), N = Math.max(0, Math.min(R, P)), $ = Math.max(0, Math.min(E, P)), C = S > P || T > P || b > P || k > P || M > P || R > P || E > P, V = x + w + H + U + G + N + $;
-  if (V > I) throw new Error(`Total dice count (${V}) exceeds maximum allowed (${I}). Please reduce the number of dice in your pool.`);
-  if (C && (null == a2 ? void 0 : a2.throwOnLimitExceeded)) {
+  })(e2), T = null !== (s2 = D.boostDice) && void 0 !== s2 ? s2 : 0, b = null !== (i2 = D.abilityDice) && void 0 !== i2 ? i2 : 0, k = null !== (r2 = D.proficiencyDice) && void 0 !== r2 ? r2 : 0, M = null !== (c2 = D.setBackDice) && void 0 !== c2 ? c2 : 0, R = null !== (n2 = D.difficultyDice) && void 0 !== n2 ? n2 : 0, E = null !== (o2 = D.challengeDice) && void 0 !== o2 ? o2 : 0, I = null !== (d = D.forceDice) && void 0 !== d ? d : 0, P = null !== (y2 = null == a2 ? void 0 : a2.maxDicePerType) && void 0 !== y2 ? y2 : 100, x = null !== (S = null == a2 ? void 0 : a2.maxTotalDice) && void 0 !== S ? S : 500, H = Math.max(0, Math.min(T, P)), w = Math.max(0, Math.min(b, P)), U = Math.max(0, Math.min(k, P)), G = Math.max(0, Math.min(M, P)), N = Math.max(0, Math.min(R, P)), C = Math.max(0, Math.min(E, P)), V = Math.max(0, Math.min(I, P)), $ = T > P || b > P || k > P || M > P || R > P || E > P || I > P, L = H + w + U + G + N + C + V;
+  if (L > x) throw new Error(`Total dice count (${L}) exceeds maximum allowed (${x}). Please reduce the number of dice in your pool.`);
+  if ($ && (null == a2 ? void 0 : a2.throwOnLimitExceeded)) {
     const e3 = [];
-    throw S > P && e3.push(`boost: ${S}`), T > P && e3.push(`ability: ${T}`), b > P && e3.push(`proficiency: ${b}`), k > P && e3.push(`setback: ${k}`), M > P && e3.push(`difficulty: ${M}`), R > P && e3.push(`challenge: ${R}`), E > P && e3.push(`force: ${E}`), new Error(`Dice counts exceed per-type limit (${P}): ${e3.join(", ")}. Dice counts have been capped to the maximum.`);
+    throw T > P && e3.push(`boost: ${T}`), b > P && e3.push(`ability: ${b}`), k > P && e3.push(`proficiency: ${k}`), M > P && e3.push(`setback: ${M}`), R > P && e3.push(`difficulty: ${R}`), E > P && e3.push(`challenge: ${E}`), I > P && e3.push(`force: ${I}`), new Error(`Dice counts exceed per-type limit (${P}): ${e3.join(", ")}. Dice counts have been capped to the maximum.`);
   }
-  const L = [];
-  for (let e3 = 0; e3 < x; e3++) {
-    const e4 = l(6);
-    L.push({ type: "boost", roll: e4, result: u(e4) });
+  const F = [];
+  for (let e3 = 0; e3 < H; e3++) {
+    const e4 = u(6);
+    F.push({ type: "boost", roll: e4, result: h(e4) });
   }
   for (let e3 = 0; e3 < w; e3++) {
-    const e4 = l(8);
-    L.push({ type: "ability", roll: e4, result: p(e4) });
-  }
-  for (let e3 = 0; e3 < H; e3++) {
-    const e4 = l(12);
-    L.push({ type: "proficiency", roll: e4, result: f(e4) });
+    const e4 = u(8);
+    F.push({ type: "ability", roll: e4, result: g(e4) });
   }
   for (let e3 = 0; e3 < U; e3++) {
-    const e4 = l(6);
-    L.push({ type: "setback", roll: e4, result: h(e4) });
+    const e4 = u(12);
+    F.push({ type: "proficiency", roll: e4, result: m(e4) });
   }
   for (let e3 = 0; e3 < G; e3++) {
-    const e4 = l(8);
-    L.push({ type: "difficulty", roll: e4, result: g(e4) });
+    const e4 = u(6);
+    F.push({ type: "setback", roll: e4, result: p(e4) });
   }
   for (let e3 = 0; e3 < N; e3++) {
-    const e4 = l(12);
-    L.push({ type: "challenge", roll: e4, result: m(e4) });
+    const e4 = u(8);
+    F.push({ type: "difficulty", roll: e4, result: f(e4) });
   }
-  for (let e3 = 0; e3 < $; e3++) {
-    const e4 = l(12);
-    L.push({ type: "force", roll: e4, result: v(e4) });
+  for (let e3 = 0; e3 < C; e3++) {
+    const e4 = u(12);
+    F.push({ type: "challenge", roll: e4, result: v(e4) });
   }
-  const j = { successes: e2.automaticSuccesses, failures: e2.automaticFailures, advantages: e2.automaticAdvantages, threats: e2.automaticThreats, triumphs: e2.automaticTriumphs, despairs: e2.automaticDespairs, lightSide: e2.automaticLightSide, darkSide: e2.automaticDarkSide }, F = ((e3, t2) => {
+  for (let e3 = 0; e3 < V; e3++) {
+    const e4 = u(12);
+    F.push({ type: "force", roll: e4, result: A(e4) });
+  }
+  const j = { successes: e2.automaticSuccesses, failures: e2.automaticFailures, advantages: e2.automaticAdvantages, threats: e2.automaticThreats, triumphs: e2.automaticTriumphs, despairs: e2.automaticDespairs, lightSide: e2.automaticLightSide, darkSide: e2.automaticDarkSide }, O = ((e3, t2) => {
     const a3 = e3.reduce((e4, t3) => ({ successes: e4.successes + t3.successes + t3.triumphs, failures: e4.failures + t3.failures + t3.despair, advantages: e4.advantages + t3.advantages, threats: e4.threats + t3.threats, triumphs: e4.triumphs + t3.triumphs, despair: e4.despair + t3.despair, lightSide: e4.lightSide + (t3.lightSide || 0), darkSide: e4.darkSide + (t3.darkSide || 0) }), { successes: ((null == t2 ? void 0 : t2.successes) || 0) + ((null == t2 ? void 0 : t2.triumphs) || 0), failures: ((null == t2 ? void 0 : t2.failures) || 0) + ((null == t2 ? void 0 : t2.despairs) || 0), advantages: (null == t2 ? void 0 : t2.advantages) || 0, threats: (null == t2 ? void 0 : t2.threats) || 0, triumphs: (null == t2 ? void 0 : t2.triumphs) || 0, despair: (null == t2 ? void 0 : t2.despairs) || 0, lightSide: (null == t2 ? void 0 : t2.lightSide) || 0, darkSide: (null == t2 ? void 0 : t2.darkSide) || 0 });
     let s3 = 0, i3 = 0;
     a3.successes === a3.failures ? (s3 = 0, i3 = 0) : a3.successes > a3.failures ? s3 = a3.successes - a3.failures : i3 = a3.failures - a3.successes;
     let r3 = 0, c3 = 0;
     return a3.advantages === a3.threats ? (r3 = 0, c3 = 0) : a3.advantages > a3.threats ? r3 = a3.advantages - a3.threats : c3 = a3.threats - a3.advantages, { successes: s3, failures: i3, advantages: r3, threats: c3, triumphs: a3.triumphs, despair: a3.despair, lightSide: a3.lightSide, darkSide: a3.darkSide };
-  })(L.map((e3) => e3.result), j);
+  })(F.map((e3) => e3.result), j);
   if (null == a2 ? void 0 : a2.hints) {
     const e3 = t.filter((e4) => {
       const { cost: t2 } = e4;
       return Object.entries(t2).some(([e5, t3]) => {
-        const a3 = e5.toLowerCase() + "s", s3 = F[a3];
+        const a3 = l[e5];
+        if (!a3) return false;
+        const s3 = O[a3];
         return "number" == typeof s3 && (void 0 !== t3 && t3 > 0 && s3 >= t3);
       });
     });
-    F.hints = e3.map((e4) => `${(function(e5) {
+    O.hints = e3.map((e4) => `${(function(e5) {
       if (!e5.cost || 0 === Object.keys(e5.cost).length) return "No cost";
       const t2 = Object.entries(e5.cost).filter(([e6, t3]) => t3 && t3 > 0).map(([e6, t3]) => `${t3} ${e6.charAt(0).toUpperCase() + e6.toLowerCase().slice(1)}${t3 > 1 ? "s" : ""}`);
       return t2.length > 1 ? t2.join(" OR ") : t2.length > 0 ? t2[0] : "No cost";
     })(e4)} - ${e4.description}`);
   }
-  return { results: L, summary: F };
+  return { results: F, summary: O };
 };
 
 // src/MonteCarlo.ts
@@ -163,8 +166,13 @@ var _MonteCarlo = class _MonteCarlo {
       failures: {},
       threats: {},
       lightSide: {},
-      darkSide: {}
+      darkSide: {},
+      netForce: {}
     };
+    // Theoretical maximum total Force pips (2 per Force die + automatic pips);
+    // computed per run in simulate(). Used for the "Max Force Pips %" metric.
+    this.maxForcePips = 0;
+    this.hasForceDice = false;
     this.statsCache = /* @__PURE__ */ new Map();
     this.modifierStats = {
       automaticSymbolContribution: {
@@ -207,6 +215,7 @@ var _MonteCarlo = class _MonteCarlo {
       sumDespair: 0,
       sumLightSide: 0,
       sumDarkSide: 0,
+      sumNetForce: 0,
       sumSquaredSuccesses: 0,
       sumSquaredAdvantages: 0,
       sumSquaredThreats: 0,
@@ -214,7 +223,9 @@ var _MonteCarlo = class _MonteCarlo {
       sumSquaredDespair: 0,
       sumSquaredLightSide: 0,
       sumSquaredDarkSide: 0,
-      sumSquaredTriumphs: 0
+      sumSquaredTriumphs: 0,
+      sumSquaredNetForce: 0,
+      maxForcePipsCount: 0
     };
     this.results = [];
     if (this.isSimulationConfig(dicePoolOrConfig)) {
@@ -507,6 +518,7 @@ var _MonteCarlo = class _MonteCarlo {
       sumDespair: 0,
       sumLightSide: 0,
       sumDarkSide: 0,
+      sumNetForce: 0,
       sumSquaredSuccesses: 0,
       sumSquaredAdvantages: 0,
       sumSquaredThreats: 0,
@@ -514,7 +526,9 @@ var _MonteCarlo = class _MonteCarlo {
       sumSquaredDespair: 0,
       sumSquaredLightSide: 0,
       sumSquaredDarkSide: 0,
-      sumSquaredTriumphs: 0
+      sumSquaredTriumphs: 0,
+      sumSquaredNetForce: 0,
+      maxForcePipsCount: 0
     };
   }
   resetModifierStats() {
@@ -610,6 +624,8 @@ var _MonteCarlo = class _MonteCarlo {
     this.histogram.darkSide[result.darkSide] = (this.histogram.darkSide[result.darkSide] || 0) + 1;
     this.histogram.failures[result.failures] = (this.histogram.failures[result.failures] || 0) + 1;
     this.histogram.threats[result.threats] = (this.histogram.threats[result.threats] || 0) + 1;
+    const netForce = result.lightSide - result.darkSide;
+    this.histogram.netForce[netForce] = (this.histogram.netForce[netForce] || 0) + 1;
     this.runningStats.sumSuccesses += result.successes;
     this.runningStats.sumAdvantages += result.advantages;
     this.runningStats.sumTriumphs += result.triumphs;
@@ -618,6 +634,7 @@ var _MonteCarlo = class _MonteCarlo {
     this.runningStats.sumDespair += result.despair;
     this.runningStats.sumLightSide += result.lightSide;
     this.runningStats.sumDarkSide += result.darkSide;
+    this.runningStats.sumNetForce += netForce;
     this.runningStats.sumSquaredSuccesses += result.successes * result.successes;
     this.runningStats.sumSquaredAdvantages += result.advantages * result.advantages;
     this.runningStats.sumSquaredThreats += result.threats * result.threats;
@@ -626,6 +643,10 @@ var _MonteCarlo = class _MonteCarlo {
     this.runningStats.sumSquaredLightSide += result.lightSide * result.lightSide;
     this.runningStats.sumSquaredDarkSide += result.darkSide * result.darkSide;
     this.runningStats.sumSquaredTriumphs += result.triumphs * result.triumphs;
+    this.runningStats.sumSquaredNetForce += netForce * netForce;
+    if (this.hasForceDice && result.lightSide + result.darkSide === this.maxForcePips) {
+      this.runningStats.maxForcePipsCount++;
+    }
     if (netSuccesses > 0) {
       this.runningStats.successCount++;
       if (netAdvantages > 0) {
@@ -643,6 +664,9 @@ var _MonteCarlo = class _MonteCarlo {
       this.statsCache.clear();
       this.results = [];
       const modifiedPool = this.applyModifiers(this.dicePool);
+      const forceDiceCount = modifiedPool.forceDice || 0;
+      this.hasForceDice = forceDiceCount > 0;
+      this.maxForcePips = 2 * forceDiceCount + (modifiedPool.automaticLightSide || 0) + (modifiedPool.automaticDarkSide || 0);
       for (let i2 = 0; i2 < this.iterations; i2++) {
         const rollResult = y(modifiedPool);
         this.results.push(rollResult.summary);
@@ -727,6 +751,20 @@ var _MonteCarlo = class _MonteCarlo {
         lightSide: this.calculateMedianFromHistogram(this.histogram.lightSide),
         darkSide: this.calculateMedianFromHistogram(this.histogram.darkSide)
       };
+      const averageNetForce = this.runningStats.sumNetForce / this.iterations;
+      const forceStatistics = {
+        averageNetForce,
+        medianNetForce: this.calculateMedianFromHistogram(
+          this.histogram.netForce
+        ),
+        standardDeviationNetForce: Math.sqrt(
+          Math.max(
+            0,
+            this.runningStats.sumSquaredNetForce / this.iterations - averageNetForce * averageNetForce
+          )
+        ),
+        maxForcePipsProbability: this.hasForceDice ? this.runningStats.maxForcePipsCount / this.iterations : 0
+      };
       const analysis = {
         netSuccesses: this.analyzeDistribution(
           this.histogram.netSuccesses,
@@ -751,6 +789,10 @@ var _MonteCarlo = class _MonteCarlo {
         darkSide: this.analyzeDistribution(
           this.histogram.darkSide,
           this.iterations
+        ),
+        netForce: this.analyzeDistribution(
+          this.histogram.netForce,
+          this.iterations
         )
       };
       const result = {
@@ -761,6 +803,7 @@ var _MonteCarlo = class _MonteCarlo {
         criticalSuccessProbability,
         criticalFailureProbability,
         netPositiveProbability,
+        forceStatistics,
         histogram: this.histogram,
         analysis
       };
@@ -807,7 +850,8 @@ var _MonteCarlo = class _MonteCarlo {
       failures: {},
       threats: {},
       lightSide: {},
-      darkSide: {}
+      darkSide: {},
+      netForce: {}
     };
   }
   calculateMedianFromHistogram(histogram) {

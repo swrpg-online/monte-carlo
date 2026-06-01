@@ -29,6 +29,12 @@ interface MonteCarloResult {
   criticalSuccessProbability: number;
   criticalFailureProbability: number;
   netPositiveProbability: number;
+  forceStatistics: {
+    averageNetForce: number; // "Avg Net Force Pips" (lightSide - darkSide)
+    medianNetForce: number;
+    standardDeviationNetForce: number;
+    maxForcePipsProbability: number; // "Max Force Pips %": P(every Force die shows a 2-pip face)
+  };
 }
 
 interface DiceResult {
