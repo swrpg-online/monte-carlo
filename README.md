@@ -231,13 +231,20 @@ console.log("Combat Check Results:", JSON.stringify(combatResults, null, 2));
   "criticalSuccessProbability": 0.1643,
   "criticalFailureProbability": 0.0827,
   "netPositiveProbability": 0.219,
+  "forceStatistics": {
+    "averageNetForce": 0.0021,
+    "medianNetForce": 0,
+    "standardDeviationNetForce": 1.31,
+    "maxForcePipsProbability": 0.3331
+  },
   "histogram": {
     "netSuccesses": { /* distribution data */ },
     "netAdvantages": { /* distribution data */ },
     "triumphs": { /* distribution data */ },
     "despairs": { /* distribution data */ },
     "lightSide": { /* distribution data */ },
-    "darkSide": { /* distribution data */ }
+    "darkSide": { /* distribution data */ },
+    "netForce": { /* distribution data */ }
   },
   "analysis": {
     "netSuccesses": {
@@ -256,7 +263,8 @@ console.log("Combat Check Results:", JSON.stringify(combatResults, null, 2));
     "triumphs": { /* similar structure */ },
     "despairs": { /* similar structure */ },
     "lightSide": { /* similar structure */ },
-    "darkSide": { /* similar structure */ }
+    "darkSide": { /* similar structure */ },
+    "netForce": { /* similar structure */ }
   }
 }
 ```
@@ -292,6 +300,16 @@ When analyzing your dice pool using the Monte Carlo simulation, here's how to in
 - **criticalFailureProbability**: The chance of rolling at least one despair (⊝). Similar to triumphs, despairs can trigger significant negative narrative events. A probability of 0.083 indicates about a 1-in-12 chance of a despair occurring.
 
 - **netPositiveProbability**: The likelihood of achieving both net successes and net advantages. This is particularly useful for social encounters or situations where both succeeding and gaining advantage are important. A value of 0.432 means you have a 43.2% chance of both succeeding and gaining advantage.
+
+#### Force Statistics
+
+`forceStatistics` summarizes Force dice (white d12) outcomes. Net Force is `lightSide - darkSide`, so positive values lean Light Side and negative values lean Dark Side.
+
+- **averageNetForce** ("Avg Net Force Pips"): The mean net Force pips per roll. A single Force die is pip-symmetric (8 Light and 8 Dark pips across its 12 faces), so a pure Force pool trends toward 0; flat `automaticLightSide` / `automaticDarkSide` modifiers shift it.
+- **medianNetForce** / **standardDeviationNetForce**: The typical net Force result and how swingy it is, mirroring the `medians`/`standardDeviations` measures for other symbols.
+- **maxForcePipsProbability** ("Max Force Pips %"): The probability of rolling the maximum possible pips — every Force die landing on a 2-pip face. Each die has a 4-in-12 (1/3) chance, so 1 Force die ≈ 0.333 and 2 dice ≈ 0.111. This is 0 for pools without Force dice.
+
+The `histogram.netForce` and `analysis.netForce` entries provide the full net-Force distribution (buckets, skewness, kurtosis, percentiles, modes, outliers) in the same shape as the other symbols.
 
 #### Statistical Measures
 

@@ -71,6 +71,7 @@ export interface HistogramData {
   threats: { [key: number]: number };
   lightSide: { [key: number]: number };
   darkSide: { [key: number]: number };
+  netForce: { [key: number]: number };
 }
 
 export interface DistributionAnalysis {
@@ -91,6 +92,12 @@ export interface MonteCarloResult {
   criticalSuccessProbability: number;
   criticalFailureProbability: number;
   netPositiveProbability: number;
+  forceStatistics: {
+    averageNetForce: number; // "Avg Net Force Pips" (lightSide - darkSide)
+    medianNetForce: number;
+    standardDeviationNetForce: number;
+    maxForcePipsProbability: number; // "Max Force Pips %": P(every Force die shows a 2-pip face)
+  };
   histogram: HistogramData;
   analysis: {
     netSuccesses: DistributionAnalysis;
@@ -99,6 +106,7 @@ export interface MonteCarloResult {
     despairs: DistributionAnalysis;
     lightSide: DistributionAnalysis;
     darkSide: DistributionAnalysis;
+    netForce: DistributionAnalysis;
   };
   modifierAnalysis?: ModifierAnalysis;
 }
@@ -117,7 +125,12 @@ export class MonteCarlo {
     threats: {},
     lightSide: {},
     darkSide: {},
+    netForce: {},
   };
+  // Theoretical maximum total Force pips (2 per Force die + automatic pips);
+  // computed per run in simulate(). Used for the "Max Force Pips %" metric.
+  private maxForcePips = 0;
+  private hasForceDice = false;
   private static readonly MIN_ITERATIONS = 100;
   private static readonly MAX_ITERATIONS = 1000000;
   private statsCache: Map<string, number> = new Map();
@@ -162,6 +175,7 @@ export class MonteCarlo {
     sumDespair: number;
     sumLightSide: number;
     sumDarkSide: number;
+    sumNetForce: number;
     sumSquaredSuccesses: number;
     sumSquaredAdvantages: number;
     sumSquaredThreats: number;
@@ -170,6 +184,8 @@ export class MonteCarlo {
     sumSquaredLightSide: number;
     sumSquaredDarkSide: number;
     sumSquaredTriumphs: number;
+    sumSquaredNetForce: number;
+    maxForcePipsCount: number;
   } = {
     successCount: 0,
     criticalSuccessCount: 0,
@@ -183,6 +199,7 @@ export class MonteCarlo {
     sumDespair: 0,
     sumLightSide: 0,
     sumDarkSide: 0,
+    sumNetForce: 0,
     sumSquaredSuccesses: 0,
     sumSquaredAdvantages: 0,
     sumSquaredThreats: 0,
@@ -191,6 +208,8 @@ export class MonteCarlo {
     sumSquaredLightSide: 0,
     sumSquaredDarkSide: 0,
     sumSquaredTriumphs: 0,
+    sumSquaredNetForce: 0,
+    maxForcePipsCount: 0,
   };
   private results: DiceResult[] = [];
 
@@ -608,6 +627,7 @@ export class MonteCarlo {
       sumDespair: 0,
       sumLightSide: 0,
       sumDarkSide: 0,
+      sumNetForce: 0,
       sumSquaredSuccesses: 0,
       sumSquaredAdvantages: 0,
       sumSquaredThreats: 0,
@@ -616,6 +636,8 @@ export class MonteCarlo {
       sumSquaredLightSide: 0,
       sumSquaredDarkSide: 0,
       sumSquaredTriumphs: 0,
+      sumSquaredNetForce: 0,
+      maxForcePipsCount: 0,
     };
   }
 
@@ -736,6 +758,11 @@ export class MonteCarlo {
     this.histogram.threats[result.threats] =
       (this.histogram.threats[result.threats] || 0) + 1;
 
+    // Update net force (light side - dark side) with direct array access
+    const netForce = result.lightSide - result.darkSide;
+    this.histogram.netForce[netForce] =
+      (this.histogram.netForce[netForce] || 0) + 1;
+
     // Update running statistics
     this.runningStats.sumSuccesses += result.successes;
     this.runningStats.sumAdvantages += result.advantages;
@@ -745,6 +772,7 @@ export class MonteCarlo {
     this.runningStats.sumDespair += result.despair;
     this.runningStats.sumLightSide += result.lightSide;
     this.runningStats.sumDarkSide += result.darkSide;
+    this.runningStats.sumNetForce += netForce;
     this.runningStats.sumSquaredSuccesses +=
       result.successes * result.successes;
     this.runningStats.sumSquaredAdvantages +=
@@ -756,6 +784,15 @@ export class MonteCarlo {
       result.lightSide * result.lightSide;
     this.runningStats.sumSquaredDarkSide += result.darkSide * result.darkSide;
     this.runningStats.sumSquaredTriumphs += result.triumphs * result.triumphs;
+    this.runningStats.sumSquaredNetForce += netForce * netForce;
+
+    // Count rolls hitting the theoretical maximum Force pips (every die's 2-pip face)
+    if (
+      this.hasForceDice &&
+      result.lightSide + result.darkSide === this.maxForcePips
+    ) {
+      this.runningStats.maxForcePipsCount++;
+    }
 
     if (netSuccesses > 0) {
       this.runningStats.successCount++;
@@ -777,6 +814,16 @@ export class MonteCarlo {
 
       // Apply modifiers to create the modified pool
       const modifiedPool = this.applyModifiers(this.dicePool);
+
+      // Determine the theoretical maximum Force pips for this pool: every Force
+      // die showing its 2-pip face, plus any flat automatic pips (which roll()
+      // folds into result.lightSide/darkSide). Used for the "Max Force Pips %".
+      const forceDiceCount = modifiedPool.forceDice || 0;
+      this.hasForceDice = forceDiceCount > 0;
+      this.maxForcePips =
+        2 * forceDiceCount +
+        (modifiedPool.automaticLightSide || 0) +
+        (modifiedPool.automaticDarkSide || 0);
 
       // Run simulations and update histograms in a single pass
       for (let i = 0; i < this.iterations; i++) {
@@ -884,6 +931,25 @@ export class MonteCarlo {
         darkSide: this.calculateMedianFromHistogram(this.histogram.darkSide),
       };
 
+      // Calculate net Force statistics (lightSide - darkSide)
+      const averageNetForce = this.runningStats.sumNetForce / this.iterations;
+      const forceStatistics = {
+        averageNetForce,
+        medianNetForce: this.calculateMedianFromHistogram(
+          this.histogram.netForce,
+        ),
+        standardDeviationNetForce: Math.sqrt(
+          Math.max(
+            0,
+            this.runningStats.sumSquaredNetForce / this.iterations -
+              averageNetForce * averageNetForce,
+          ),
+        ),
+        maxForcePipsProbability: this.hasForceDice
+          ? this.runningStats.maxForcePipsCount / this.iterations
+          : 0,
+      };
+
       // Calculate analysis for each histogram category
       const analysis = {
         netSuccesses: this.analyzeDistribution(
@@ -910,6 +976,10 @@ export class MonteCarlo {
           this.histogram.darkSide,
           this.iterations,
         ),
+        netForce: this.analyzeDistribution(
+          this.histogram.netForce,
+          this.iterations,
+        ),
       };
 
       const result: MonteCarloResult = {
@@ -920,6 +990,7 @@ export class MonteCarlo {
         criticalSuccessProbability,
         criticalFailureProbability,
         netPositiveProbability,
+        forceStatistics,
         histogram: this.histogram,
         analysis,
       };
@@ -999,6 +1070,7 @@ export class MonteCarlo {
       threats: {},
       lightSide: {},
       darkSide: {},
+      netForce: {},
     };
   }
 

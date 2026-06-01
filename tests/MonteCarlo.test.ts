@@ -149,6 +149,89 @@ describe("MonteCarlo", () => {
       expect(result.averages.darkSide).toBeGreaterThan(0);
     });
 
+    describe("force statistics", () => {
+      it("should calculate net force pip statistics", () => {
+        const monteCarlo = new MonteCarlo({ forceDice: 2 }, 10000);
+        const result = monteCarlo.simulate();
+
+        // Net force is lightSide - darkSide; with 2 Force dice it must stay
+        // within [-4, 4].
+        expect(Number.isFinite(result.forceStatistics.averageNetForce)).toBe(
+          true,
+        );
+        expect(result.forceStatistics.averageNetForce).toBeGreaterThanOrEqual(
+          -4,
+        );
+        expect(result.forceStatistics.averageNetForce).toBeLessThanOrEqual(4);
+
+        // A single Force die is pip-symmetric (light sum === dark sum === 8),
+        // so the mean net force should sit near zero.
+        expect(Math.abs(result.forceStatistics.averageNetForce)).toBeLessThan(
+          0.5,
+        );
+
+        expect(Number.isInteger(result.forceStatistics.medianNetForce)).toBe(
+          true,
+        );
+        expect(
+          result.forceStatistics.standardDeviationNetForce,
+        ).toBeGreaterThanOrEqual(0);
+      });
+
+      it("should calculate max force pips probability for a single die", () => {
+        const monteCarlo = new MonteCarlo({ forceDice: 1 }, 20000);
+        const result = monteCarlo.simulate();
+
+        // 4 of the 12 Force die faces show 2 pips (one 2-dark, three 2-light),
+        // so P(max pips) = 4/12 ≈ 0.333.
+        expect(result.forceStatistics.maxForcePipsProbability).toBeGreaterThan(
+          0.3,
+        );
+        expect(result.forceStatistics.maxForcePipsProbability).toBeLessThan(
+          0.37,
+        );
+      });
+
+      it("should calculate max force pips probability for multiple dice", () => {
+        const monteCarlo = new MonteCarlo({ forceDice: 2 }, 20000);
+        const result = monteCarlo.simulate();
+
+        // Both dice must show a 2-pip face: (1/3)^2 ≈ 0.111.
+        expect(result.forceStatistics.maxForcePipsProbability).toBeGreaterThan(
+          0.08,
+        );
+        expect(result.forceStatistics.maxForcePipsProbability).toBeLessThan(
+          0.14,
+        );
+      });
+
+      it("should return zero force stats for a pool without force dice", () => {
+        const monteCarlo = new MonteCarlo({ abilityDice: 2 }, 10000);
+        const result = monteCarlo.simulate();
+
+        expect(result.forceStatistics.averageNetForce).toBe(0);
+        expect(result.forceStatistics.medianNetForce).toBe(0);
+        expect(result.forceStatistics.standardDeviationNetForce).toBe(0);
+        // Guard: max-pips is meaningless without Force dice, so it is 0 (not 1).
+        expect(result.forceStatistics.maxForcePipsProbability).toBe(0);
+      });
+
+      it("should include a net force histogram and distribution analysis", () => {
+        const monteCarlo = new MonteCarlo({ forceDice: 2 }, 10000);
+        const result = monteCarlo.simulate();
+
+        expect(result.histogram.netForce).toBeDefined();
+        expect(Object.keys(result.histogram.netForce).length).toBeGreaterThan(
+          0,
+        );
+
+        expect(result.analysis.netForce).toBeDefined();
+        expect(result.analysis.netForce.skewness).toBeDefined();
+        expect(result.analysis.netForce.kurtosis).toBeDefined();
+        expect(result.analysis.netForce.percentiles).toBeDefined();
+      });
+    });
+
     it("should handle boost and setback dice", () => {
       const boostSetbackPool: DicePool = {
         boostDice: 2,

@@ -78,6 +78,9 @@ export interface HistogramData {
     darkSide: {
         [key: number]: number;
     };
+    netForce: {
+        [key: number]: number;
+    };
 }
 export interface DistributionAnalysis {
     skewness: number;
@@ -96,6 +99,12 @@ export interface MonteCarloResult {
     criticalSuccessProbability: number;
     criticalFailureProbability: number;
     netPositiveProbability: number;
+    forceStatistics: {
+        averageNetForce: number;
+        medianNetForce: number;
+        standardDeviationNetForce: number;
+        maxForcePipsProbability: number;
+    };
     histogram: HistogramData;
     analysis: {
         netSuccesses: DistributionAnalysis;
@@ -104,6 +113,7 @@ export interface MonteCarloResult {
         despairs: DistributionAnalysis;
         lightSide: DistributionAnalysis;
         darkSide: DistributionAnalysis;
+        netForce: DistributionAnalysis;
     };
     modifierAnalysis?: ModifierAnalysis;
 }
@@ -113,6 +123,8 @@ export declare class MonteCarlo {
     private readonly modifiers?;
     private readonly config?;
     private histogram;
+    private maxForcePips;
+    private hasForceDice;
     private static readonly MIN_ITERATIONS;
     private static readonly MAX_ITERATIONS;
     private statsCache;
