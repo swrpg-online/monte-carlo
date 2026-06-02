@@ -72,5 +72,5 @@
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
   },
-  "version": "2.4.6"
+  "version": "2.5.0"
 }
